@@ -1,39 +1,9 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.js",
-      "use": "@vercel/node"
+  "rewrites": [
+    { 
+      "source": "/(.*)", 
+      "destination": "/api" 
     }
-  ],
-  "routes": [
-    {
-      "src": "/track",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/track-email",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/health",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/stats",
-      "dest": "/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "index.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 } 
