@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume</title>
+    <meta name="description" content="Professional resume with download capability">
+    <meta name="author" content="Resume Owner">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .resume-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 24px;
+            max-width: 1000px;
+            width: 100%;
+            position: relative;
+            border: 1px solid #e1e8ed;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .download-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .download-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .pdf-viewer {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .loading::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+
+        .tracking-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .tracking-status.show {
+            display: block;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(20px); }
+            20%, 80% { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .resume-container {
+                padding: 16px;
+            }
+            
+            .controls {
+                justify-content: center;
+                margin-bottom: 16px;
+            }
+            
+            .pdf-viewer {
+                height: 80vh;
+            }
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            background: #ffe6e6;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <div class="controls">
+            <button class="download-btn" id="downloadBtn" onclick="downloadPDF()">
+                <span>📥</span>
+                Download PDF
+            </button>
+        </div>
+
+        <div class="loading" id="loading">Loading resume...</div>
+        
+        <iframe 
+            src="./resume.pdf#navpanes=0&toolbar=0&statusbar=0&messages=0&scrollbar=1&view=FitH" 
+            class="pdf-viewer" 
+            id="pdfViewer"
+            style="display: none;"
+            title="Resume PDF Viewer"
+            onload="handlePDFLoad()"
+            onerror="handlePDFError()">
+        </iframe>
+
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <h3>Unable to load PDF</h3>
+            <p>Please use the download button above to view the resume.</p>
+        </div>
+    </div>
+
+
+
+    <div class="tracking-status" id="trackingStatus">
+        📊 Visitor data tracked successfully
+    </div>
+
+    <script>
+        // Global variables
+        let trackingData = {};
+        let statsData = {};
+
+        // Initialize tracking when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTracking();
+        });
+
+        // Initialize tracking system
+        async function initializeTracking() {
+            // Check if we're running on a server (not file://)
+            if (window.location.protocol === 'file:') {
+                console.log('📁 Running from file system - tracking disabled');
+                showTrackingStatus('Local file mode - tracking disabled');
+                return;
+            }
+
+            try {
+                // Call the tracking endpoint to log the visit
+                // Note: This will redirect, so we use fetch with no-follow mode
+                const response = await fetch('/api/track', {
+                    method: 'GET',
+                    redirect: 'manual'
+                });
+                
+                // Show tracking confirmation
+                showTrackingStatus('Visit tracked successfully');
+                
+                console.log('📊 Tracking initialized');
+            } catch (error) {
+                console.warn('⚠️ Tracking failed:', error);
+                showTrackingStatus('Tracking unavailable');
+            }
+        }
+
+
+
+        // Download PDF function
+        async function downloadPDF() {
+            try {
+                // Track the download first
+                await trackDownload();
+                
+                // Create a temporary link to trigger download
+                const link = document.createElement('a');
+                link.href = './resume.pdf';
+                link.download = 'resume.pdf';
+                link.style.display = 'none';
+                
+                // Add to DOM, click, and remove
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log('✅ PDF download initiated');
+            } catch (error) {
+                console.warn('⚠️ Download failed:', error);
+                // Fallback: open in new tab
+                window.open('./resume.pdf', '_blank');
+            }
+        }
+
+        // Track download events
+        async function trackDownload() {
+            // Check if we're running on a server (not file://)
+            if (window.location.protocol === 'file:') {
+                console.log('📁 Download from file system - tracking disabled');
+                showTrackingStatus('📥 Download (tracking disabled)');
+                return;
+            }
+
+            try {
+                // Get email from URL parameters if available
+                const urlParams = new URLSearchParams(window.location.search);
+                const email = urlParams.get('email');
+                const source = urlParams.get('source') || 'download_button';
+                
+                let trackingUrl = '/api/track-email?source=download';
+                if (email) {
+                    trackingUrl += `&email=${encodeURIComponent(email)}`;
+                }
+                
+                // Track the download event
+                await fetch(trackingUrl, {
+                    method: 'GET',
+                    redirect: 'manual'
+                });
+                
+                showTrackingStatus('📥 Download tracked');
+                console.log('📥 Download event tracked');
+            } catch (error) {
+                console.warn('⚠️ Download tracking failed:', error);
+            }
+        }
+
+        // Handle PDF load success
+        function handlePDFLoad() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('pdfViewer').style.display = 'block';
+            console.log('✅ PDF loaded successfully');
+        }
+
+        // Handle PDF load error
+        function handlePDFError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            console.warn('⚠️ PDF failed to load');
+        }
+
+        // Show tracking status notification
+        function showTrackingStatus(message) {
+            const statusEl = document.getElementById('trackingStatus');
+            statusEl.textContent = message;
+            statusEl.classList.add('show');
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+
+
+
+        // Enhanced tracking for page visibility
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                console.log('👁️ Page became visible');
+            } else {
+                console.log('👁️ Page hidden');
+            }
+        });
+
+        // Track page unload
+        window.addEventListener('beforeunload', function() {
+            console.log('👋 User leaving page');
+        });
+
+        // Performance tracking
+        window.addEventListener('load', function() {
+            const loadTime = performance.now();
+            console.log(`⚡ Page loaded in ${loadTime.toFixed(2)}ms`);
+        });
+
+        // Health check interval (only on server)
+        if (window.location.protocol !== 'file:') {
+            setInterval(async function() {
+                try {
+                    const response = await fetch('/api/health');
+                    const health = await response.json();
+                    console.log('💚 Health check:', health.status);
+                } catch (error) {
+                    console.warn('❤️ Health check failed');
+                }
+            }, 300000); // Every 5 minutes
+        }
+
+        // Email detection from URL parameters
+        function detectEmailFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+            
+            if (email) {
+                console.log('📧 Email detected from URL:', email);
+                showTrackingStatus(`📧 Tracking for: ${email}`);
+            }
+        }
+
+        // Call email detection on load
+        detectEmailFromURL();
+    </script>
+</body>
+</html> 
