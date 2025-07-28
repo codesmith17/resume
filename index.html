@@ -117,12 +117,21 @@
             background: #047857 !important;
         }
 
-        #pageInfo {
-            color: #374151;
-            font-weight: 500;
-            font-size: 14px;
-            min-width: 80px;
-            text-align: center;
+        .reset-btn {
+            background: #7c3aed !important;
+        }
+
+        .reset-btn:hover {
+            background: #6d28d9 !important;
+        }
+
+        .links-btn {
+            background: #dc2626 !important;
+            text-decoration: none !important;
+        }
+
+        .links-btn:hover {
+            background: #b91c1c !important;
         }
 
         .pdf-canvas {
@@ -209,10 +218,7 @@
                 font-size: 11px;
             }
             
-            #pageInfo {
-                font-size: 12px;
-                min-width: 70px;
-            }
+
             
             .pdf-canvas {
                 max-height: 80vh;
@@ -315,11 +321,12 @@
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <div class="pdf-controls">
-                <button onclick="prevPage()" id="prevBtn" disabled>❮ Previous</button>
-                <span id="pageInfo">Page 1 of 1</span>
-                <button onclick="nextPage()" id="nextBtn" disabled>Next ❯</button>
-                <button onclick="zoomOut()" class="zoom-btn">🔍−</button>
-                <button onclick="zoomIn()" class="zoom-btn">🔍+</button>
+                <button onclick="zoomOut()" class="zoom-btn">🔍 Zoom Out</button>
+                <button onclick="resetZoom()" class="reset-btn">📄 Fit to Width</button>
+                <button onclick="zoomIn()" class="zoom-btn">🔍 Zoom In</button>
+                <a href="./resume.pdf" target="_blank" class="links-btn" title="Open PDF to access clickable links">
+                    🔗 Clickable Links
+                </a>
             </div>
             <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
         </div>
@@ -453,13 +460,10 @@
 
         // PDF.js variables
         let pdfDoc = null;
-        let pageNum = 1;
         let pageIsRendering = false;
-        let pageNumIsPending = null;
-        let scale = 1.2;
+        let scale = 1.5; // Higher default scale for better quality
         
         const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
 
         // Initialize PDF viewer with PDF.js
         function initializePDFViewer() {
@@ -481,12 +485,8 @@
                 pdfDoc = await pdfjsLib.getDocument('./resume.pdf').promise;
                 console.log('✅ PDF loaded with', pdfDoc.numPages, 'pages');
                 
-                // Update UI
-                document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-                updateNavButtons();
-                
-                // Render first page
-                await renderPage(pageNum);
+                // Render first page with high quality
+                await renderPage();
                 
                 // Show PDF viewer
                 showPDFViewer();
@@ -497,87 +497,63 @@
             }
         }
         
-        // Render specific page
-        async function renderPage(num) {
+        // Render PDF page with high quality
+        async function renderPage() {
+            if (pageIsRendering) return;
             pageIsRendering = true;
             
             try {
-                const page = await pdfDoc.getPage(num);
+                const page = await pdfDoc.getPage(1); // Always render page 1
                 
-                // Calculate viewport based on container width
-                const containerWidth = document.getElementById('pdfContainer').clientWidth - 40; // Account for padding
+                // Calculate viewport based on container width with high DPI
+                const containerWidth = document.getElementById('pdfContainer').clientWidth - 40;
                 const viewport = page.getViewport({ scale: 1 });
                 const scaleFactor = Math.min(containerWidth / viewport.width, scale);
-                const scaledViewport = page.getViewport({ scale: scaleFactor });
                 
-                // Set canvas dimensions
+                // Use device pixel ratio for crisp rendering
+                const devicePixelRatio = window.devicePixelRatio || 1;
+                const scaledViewport = page.getViewport({ scale: scaleFactor * devicePixelRatio });
+                
+                // Set canvas dimensions for high DPI
                 canvas.height = scaledViewport.height;
                 canvas.width = scaledViewport.width;
+                canvas.style.height = scaledViewport.height / devicePixelRatio + 'px';
+                canvas.style.width = scaledViewport.width / devicePixelRatio + 'px';
                 
-                // Render page
+                // Scale the drawing context for crisp rendering
+                const context = canvas.getContext('2d');
+                context.scale(devicePixelRatio, devicePixelRatio);
+                
+                // Render page with high quality
                 const renderContext = {
-                    canvasContext: ctx,
-                    viewport: scaledViewport
+                    canvasContext: context,
+                    viewport: page.getViewport({ scale: scaleFactor })
                 };
                 
                 await page.render(renderContext).promise;
-                
-                pageIsRendering = false;
-                
-                // Render pending page if requested
-                if (pageNumIsPending !== null) {
-                    await renderPage(pageNumIsPending);
-                    pageNumIsPending = null;
-                }
+                console.log('✅ Page rendered with scale:', scaleFactor);
                 
             } catch (error) {
                 console.error('❌ Page rendering failed:', error);
+            } finally {
                 pageIsRendering = false;
             }
-        }
-        
-        // Queue page rendering
-        async function queueRenderPage(num) {
-            if (pageIsRendering) {
-                pageNumIsPending = num;
-            } else {
-                await renderPage(num);
-            }
-        }
-        
-        // Navigation functions
-        async function prevPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-            updateNavButtons();
-            await queueRenderPage(pageNum);
-        }
-        
-        async function nextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-            updateNavButtons();
-            await queueRenderPage(pageNum);
         }
         
         // Zoom functions
         async function zoomIn() {
-            scale += 0.2;
-            await queueRenderPage(pageNum);
+            scale = Math.min(scale + 0.3, 3.0); // Max zoom 3x
+            await renderPage();
         }
         
         async function zoomOut() {
-            if (scale <= 0.4) return;
-            scale -= 0.2;
-            await queueRenderPage(pageNum);
+            scale = Math.max(scale - 0.3, 0.5); // Min zoom 0.5x
+            await renderPage();
         }
         
-        // Update navigation buttons
-        function updateNavButtons() {
-            document.getElementById('prevBtn').disabled = pageNum <= 1;
-            document.getElementById('nextBtn').disabled = pageNum >= pdfDoc.numPages;
+        async function resetZoom() {
+            scale = 1.5; // Reset to default
+            await renderPage();
         }
         
         function showPDFViewer() {
@@ -597,7 +573,7 @@
         // Handle window resize
         window.addEventListener('resize', function() {
             if (pdfDoc && !pageIsRendering) {
-                queueRenderPage(pageNum);
+                setTimeout(() => renderPage(), 100); // Small delay for resize completion
             }
         });
 
