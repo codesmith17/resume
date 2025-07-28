@@ -435,9 +435,8 @@
                 const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
                 const pdfURL = baseURL + 'resume.pdf';
                 
-                                 // Note: Get your free client ID from https://developer.adobe.com/pdf-embed-api/
-                 // This demo client ID works for testing - replace with your own for production
-                 const CLIENT_ID = "c35b9ecb2f29495194c1bf8bf6d89e6e"; // Demo client ID
+                                 // Your Adobe PDF Embed API client ID
+                 const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
                 
                 const adobeDCView = new AdobeDC.View({
                     clientId: CLIENT_ID,
