@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { google } = require('googleapis');
+const path = require('path');
 const useragent = require('useragent');
 const cors = require('cors');
 
@@ -355,6 +356,21 @@ app.get('/stats', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
+});
+
+// Serve the HTML file for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// Serve index.html explicitly
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// Serve the PDF file
+app.get('/resume.pdf', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'resume.pdf'));
 });
 
 // Export for Vercel

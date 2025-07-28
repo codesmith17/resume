@@ -212,7 +212,7 @@
             try {
                 // Call the tracking endpoint to log the visit
                 // Note: This will redirect, so we use fetch with no-follow mode
-                const response = await fetch('/api/track', {
+                const response = await fetch('/track', {
                     method: 'GET',
                     redirect: 'manual'
                 });
@@ -269,7 +269,7 @@
                 const email = urlParams.get('email');
                 const source = urlParams.get('source') || 'download_button';
                 
-                let trackingUrl = '/api/track-email?source=download';
+                let trackingUrl = '/track-email?source=download';
                 if (email) {
                     trackingUrl += `&email=${encodeURIComponent(email)}`;
                 }
@@ -338,7 +338,7 @@
         if (window.location.protocol !== 'file:') {
             setInterval(async function() {
                 try {
-                    const response = await fetch('/api/health');
+                    const response = await fetch('/health');
                     const health = await response.json();
                     console.log('💚 Health check:', health.status);
                 } catch (error) {
