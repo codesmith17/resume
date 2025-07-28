@@ -348,6 +348,37 @@
     </div>
 
     <script>
+        // Suppress Adobe PDF Embed API console errors and warnings
+        (function() {
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            
+            console.error = function(...args) {
+                const message = args.join(' ');
+                // Suppress Adobe feature flag errors and warnings
+                if (message.includes('No callback registered by viewer for GET_FEATURE_FLAG') ||
+                    message.includes('setBlockPagesList') ||
+                    message.includes('mobx.array') ||
+                    message.includes('preload but not used') ||
+                    message.includes('rendering worker created')) {
+                    return;
+                }
+                originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                // Suppress Adobe warnings
+                if (message.includes('mobx.array') ||
+                    message.includes('preload but not used') ||
+                    message.includes('The resource') ||
+                    message.includes('acrobatservices.adobe.com')) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+        })();
+
         // Global variables
         let trackingData = {};
         let statsData = {};
@@ -362,7 +393,6 @@
         async function initializeTracking() {
             // Check if we're running on a server (not file://)
             if (window.location.protocol === 'file:') {
-                console.log('📁 Running from file system - tracking disabled');
                 showTrackingStatus('Local file mode - tracking disabled');
                 return;
             }
@@ -377,8 +407,6 @@
                 
                 // Show tracking confirmation
                 showTrackingStatus('Visit tracked successfully');
-                
-                console.log('📊 Tracking initialized');
             } catch (error) {
                 console.warn('⚠️ Tracking failed:', error);
                 showTrackingStatus('Tracking unavailable');
@@ -403,8 +431,6 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
-                console.log('✅ PDF download initiated');
             } catch (error) {
                 console.warn('⚠️ Download failed:', error);
                 // Fallback: open in new tab
@@ -416,7 +442,6 @@
         async function trackDownload() {
             // Check if we're running on a server (not file://)
             if (window.location.protocol === 'file:') {
-                console.log('📁 Download from file system - tracking disabled');
                 showTrackingStatus('📥 Download (tracking disabled)');
                 return;
             }
@@ -439,7 +464,6 @@
                 });
                 
                 showTrackingStatus('📥 Download tracked');
-                console.log('📥 Download event tracked');
             } catch (error) {
                 console.warn('⚠️ Download tracking failed:', error);
             }
@@ -505,10 +529,8 @@
                 
                 // Show PDF viewer
                 showPDFViewer();
-                console.log('✅ Adobe PDF Embed initialized with interactive features and clickable links');
                 
             } catch (error) {
-                console.error('❌ Adobe PDF initialization failed:', error);
                 showPDFFallback();
             }
         }
@@ -517,14 +539,12 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('pdfContainer').style.display = 'block';
             document.getElementById('pdfFallback').style.display = 'none';
-            console.log('✅ PDF loaded successfully');
         }
         
         function showPDFFallback() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('pdfContainer').style.display = 'none';
             document.getElementById('pdfFallback').style.display = 'block';
-            console.log('📄 Using PDF fallback - PDF.js loading failed');
         }
         
 
@@ -544,33 +564,27 @@
 
         // Enhanced tracking for page visibility
         document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-                console.log('👁️ Page became visible');
-            } else {
-                console.log('👁️ Page hidden');
-            }
+            // Silent visibility tracking
         });
 
         // Track page unload
         window.addEventListener('beforeunload', function() {
-            console.log('👋 User leaving page');
+            // Silent unload tracking
         });
 
         // Performance tracking
         window.addEventListener('load', function() {
-            const loadTime = performance.now();
-            console.log(`⚡ Page loaded in ${loadTime.toFixed(2)}ms`);
+            // Silent performance tracking
         });
 
         // Health check interval (only on server)
         if (window.location.protocol !== 'file:') {
             setInterval(async function() {
                 try {
-                    const response = await fetch('https://resume-git-main-codesmith17-d89fb6b6.vercel.app/health');
-                    const health = await response.json();
-                    console.log('💚 Health check:', health.status);
+                    await fetch('https://resume-git-main-codesmith17-d89fb6b6.vercel.app/health');
+                    // Silent health check
                 } catch (error) {
-                    console.warn('❤️ Health check failed');
+                    // Silent health check failure
                 }
             }, 300000); // Every 5 minutes
         }
@@ -581,7 +595,6 @@
             const email = urlParams.get('email');
             
             if (email) {
-                console.log('📧 Email detected from URL:', email);
                 showTrackingStatus(`📧 Tracking for: ${email}`);
             }
         }
