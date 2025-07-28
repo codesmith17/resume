@@ -6,6 +6,9 @@
     <title>Resume</title>
     <meta name="description" content="Professional resume with download capability">
     <meta name="author" content="Resume Owner">
+    
+    <!-- PDF.js for cross-browser PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -70,13 +73,67 @@
             transform: translateY(0);
         }
 
-        .pdf-viewer {
-            width: 100%;
-            height: 85vh;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        .pdf-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
             border: 1px solid #e5e7eb;
+            border-bottom: none;
+            flex-wrap: wrap;
+        }
+
+        .pdf-controls button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .pdf-controls button:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .pdf-controls button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .zoom-btn {
+            background: #059669 !important;
+        }
+
+        .zoom-btn:hover {
+            background: #047857 !important;
+        }
+
+        #pageInfo {
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .pdf-canvas {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: white;
         }
 
         .loading {
@@ -142,8 +199,24 @@
                 margin-bottom: 16px;
             }
             
-            .pdf-viewer {
-                height: 80vh;
+            .pdf-controls {
+                padding: 10px;
+                gap: 8px;
+            }
+            
+            .pdf-controls button {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            
+            #pageInfo {
+                font-size: 12px;
+                min-width: 70px;
+            }
+            
+            .pdf-canvas {
+                max-height: 80vh;
+                object-fit: contain;
             }
         }
 
@@ -241,12 +314,14 @@
         <div class="loading" id="loading">Loading resume...</div>
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
-            <iframe 
-                src="./resume.pdf" 
-                class="pdf-viewer" 
-                id="pdfViewer"
-                title="Resume PDF Viewer">
-            </iframe>
+            <div class="pdf-controls">
+                <button onclick="prevPage()" id="prevBtn" disabled>❮ Previous</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button onclick="nextPage()" id="nextBtn" disabled>Next ❯</button>
+                <button onclick="zoomOut()" class="zoom-btn">🔍−</button>
+                <button onclick="zoomIn()" class="zoom-btn">🔍+</button>
+            </div>
+            <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
         </div>
 
         <div class="pdf-fallback" id="pdfFallback" style="display: none;">
@@ -376,57 +451,133 @@
             }
         }
 
-        // Initialize PDF viewer with fallback handling
+        // PDF.js variables
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageIsRendering = false;
+        let pageNumIsPending = null;
+        let scale = 1.2;
+        
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialize PDF viewer with PDF.js
         function initializePDFViewer() {
             const loading = document.getElementById('loading');
-            const pdfContainer = document.getElementById('pdfContainer');
-            const pdfFallback = document.getElementById('pdfFallback');
-            const pdfViewer = document.getElementById('pdfViewer');
             
             // Show loading initially
             loading.style.display = 'flex';
             
-            // Try to load PDF in iframe
-            let pdfLoaded = false;
-            let fallbackTimer;
+            // Configure PDF.js worker
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             
-            // Set a timeout to show fallback if PDF doesn't load quickly
-            fallbackTimer = setTimeout(() => {
-                if (!pdfLoaded) {
-                    showPDFFallback();
-                }
-            }, 3000); // 3 second timeout
-            
-            // Listen for iframe load
-            pdfViewer.onload = function() {
-                // Check if the iframe actually loaded content
-                try {
-                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
-                    if (iframeDoc && iframeDoc.body) {
-                        // PDF loaded successfully
-                        pdfLoaded = true;
-                        clearTimeout(fallbackTimer);
-                        showPDFViewer();
-                    } else {
-                        // Iframe loaded but no content
-                        showPDFFallback();
-                    }
-                } catch (e) {
-                    // Cross-origin or other error, but iframe loaded
-                    pdfLoaded = true;
-                    clearTimeout(fallbackTimer);
-                    showPDFViewer();
-                }
-            };
-            
-            // Listen for iframe error
-            pdfViewer.onerror = function() {
-                clearTimeout(fallbackTimer);
+            // Load PDF
+            loadPDF();
+        }
+        
+        // Load PDF document
+        async function loadPDF() {
+            try {
+                pdfDoc = await pdfjsLib.getDocument('./resume.pdf').promise;
+                console.log('✅ PDF loaded with', pdfDoc.numPages, 'pages');
+                
+                // Update UI
+                document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+                updateNavButtons();
+                
+                // Render first page
+                await renderPage(pageNum);
+                
+                // Show PDF viewer
+                showPDFViewer();
+                
+            } catch (error) {
+                console.error('❌ PDF loading failed:', error);
                 showPDFFallback();
-            };
+            }
+        }
+        
+        // Render specific page
+        async function renderPage(num) {
+            pageIsRendering = true;
             
-            // Force load the PDF with clean viewing parameters
-            pdfViewer.src = './resume.pdf#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+            try {
+                const page = await pdfDoc.getPage(num);
+                
+                // Calculate viewport based on container width
+                const containerWidth = document.getElementById('pdfContainer').clientWidth - 40; // Account for padding
+                const viewport = page.getViewport({ scale: 1 });
+                const scaleFactor = Math.min(containerWidth / viewport.width, scale);
+                const scaledViewport = page.getViewport({ scale: scaleFactor });
+                
+                // Set canvas dimensions
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
+                
+                // Render page
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: scaledViewport
+                };
+                
+                await page.render(renderContext).promise;
+                
+                pageIsRendering = false;
+                
+                // Render pending page if requested
+                if (pageNumIsPending !== null) {
+                    await renderPage(pageNumIsPending);
+                    pageNumIsPending = null;
+                }
+                
+            } catch (error) {
+                console.error('❌ Page rendering failed:', error);
+                pageIsRendering = false;
+            }
+        }
+        
+        // Queue page rendering
+        async function queueRenderPage(num) {
+            if (pageIsRendering) {
+                pageNumIsPending = num;
+            } else {
+                await renderPage(num);
+            }
+        }
+        
+        // Navigation functions
+        async function prevPage() {
+            if (pageNum <= 1) return;
+            pageNum--;
+            document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+            updateNavButtons();
+            await queueRenderPage(pageNum);
+        }
+        
+        async function nextPage() {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+            updateNavButtons();
+            await queueRenderPage(pageNum);
+        }
+        
+        // Zoom functions
+        async function zoomIn() {
+            scale += 0.2;
+            await queueRenderPage(pageNum);
+        }
+        
+        async function zoomOut() {
+            if (scale <= 0.4) return;
+            scale -= 0.2;
+            await queueRenderPage(pageNum);
+        }
+        
+        // Update navigation buttons
+        function updateNavButtons() {
+            document.getElementById('prevBtn').disabled = pageNum <= 1;
+            document.getElementById('nextBtn').disabled = pageNum >= pdfDoc.numPages;
         }
         
         function showPDFViewer() {
@@ -440,8 +591,15 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('pdfContainer').style.display = 'none';
             document.getElementById('pdfFallback').style.display = 'block';
-            console.log('📄 Using PDF fallback - iframe loading failed');
+            console.log('📄 Using PDF fallback - PDF.js loading failed');
         }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (pdfDoc && !pageIsRendering) {
+                queueRenderPage(pageNum);
+            }
+        });
 
         // Show tracking status notification
         function showTrackingStatus(message) {
