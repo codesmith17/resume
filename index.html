@@ -73,6 +73,35 @@
             transform: translateY(0);
         }
 
+        .portfolio-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+            font-family: inherit;
+            margin-left: 12px;
+        }
+
+        .portfolio-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .portfolio-btn:active {
+            transform: translateY(0);
+        }
+
 
 
         #adobe-dc-view {
@@ -247,6 +276,8 @@
                 margin-bottom: 6px;
                 padding: 6px 0;
                 text-align: center;
+                flex-wrap: wrap;
+                justify-content: center;
             }
             
             .download-btn {
@@ -254,6 +285,15 @@
                 font-size: 14px;
                 width: auto;
                 min-width: 160px;
+            }
+            
+            .portfolio-btn {
+                padding: 10px 18px;
+                font-size: 14px;
+                width: auto;
+                min-width: 160px;
+                margin-left: 8px;
+                margin-top: 8px;
             }
             
             #adobe-dc-view {
@@ -336,6 +376,10 @@
                 <span>📥</span>
                 Download PDF
             </button>
+            <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn">
+                <span>🌐</span>
+                View Portfolio
+            </a>
         </div>
 
         <div class="loading" id="loading">Loading resume...</div>
