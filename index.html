@@ -125,13 +125,24 @@
             background: #6d28d9 !important;
         }
 
-        .links-btn {
+        .mode-btn {
             background: #dc2626 !important;
-            text-decoration: none !important;
+            font-weight: 600 !important;
+            padding: 10px 16px !important;
         }
 
-        .links-btn:hover {
+        .mode-btn:hover {
             background: #b91c1c !important;
+        }
+
+        .pdf-iframe {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            background: white;
         }
 
         .pdf-canvas {
@@ -321,14 +332,25 @@
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <div class="pdf-controls">
-                <button onclick="zoomOut()" class="zoom-btn">🔍 Zoom Out</button>
-                <button onclick="resetZoom()" class="reset-btn">📄 Fit to Width</button>
-                <button onclick="zoomIn()" class="zoom-btn">🔍 Zoom In</button>
-                <a href="./resume.pdf" target="_blank" class="links-btn" title="Open PDF to access clickable links">
-                    🔗 Clickable Links
-                </a>
+                <button onclick="toggleViewMode()" id="viewModeBtn" class="mode-btn">
+                    🔗 Switch to Interactive Mode
+                </button>
+                <button onclick="zoomOut()" class="zoom-btn" id="zoomOutBtn" style="display: none;">🔍 Zoom Out</button>
+                <button onclick="resetZoom()" class="reset-btn" id="resetBtn" style="display: none;">📄 Fit to Width</button>
+                <button onclick="zoomIn()" class="zoom-btn" id="zoomInBtn" style="display: none;">🔍 Zoom In</button>
             </div>
+            
+            <!-- Canvas Mode (High Quality, No Links) -->
             <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+            
+            <!-- Interactive Mode (Clickable Links) -->
+            <iframe 
+                src="./resume.pdf#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
+                class="pdf-iframe" 
+                id="pdfIframe"
+                style="display: none;"
+                title="Interactive Resume PDF">
+            </iframe>
         </div>
 
         <div class="pdf-fallback" id="pdfFallback" style="display: none;">
@@ -462,12 +484,17 @@
         let pdfDoc = null;
         let pageIsRendering = false;
         let scale = 1.5; // Higher default scale for better quality
+        let currentMode = 'canvas'; // 'canvas' or 'iframe'
         
-        const canvas = document.getElementById('pdfCanvas');
+        let canvas, pdfIframe;
 
         // Initialize PDF viewer with PDF.js
         function initializePDFViewer() {
             const loading = document.getElementById('loading');
+            
+            // Get DOM elements
+            canvas = document.getElementById('pdfCanvas');
+            pdfIframe = document.getElementById('pdfIframe');
             
             // Show loading initially
             loading.style.display = 'flex';
@@ -475,8 +502,10 @@
             // Configure PDF.js worker
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             
-            // Load PDF
-            loadPDF();
+            // Load PDF after a small delay to ensure DOM is ready
+            setTimeout(() => {
+                loadPDF();
+            }, 100);
         }
         
         // Load PDF document
@@ -499,30 +528,35 @@
         
         // Render PDF page with high quality
         async function renderPage() {
-            if (pageIsRendering) return;
+            if (pageIsRendering || !canvas || !pdfDoc) return;
             pageIsRendering = true;
             
             try {
                 const page = await pdfDoc.getPage(1); // Always render page 1
                 
-                // Calculate viewport based on container width with high DPI
-                const containerWidth = document.getElementById('pdfContainer').clientWidth - 40;
+                // Clear the canvas first
+                const context = canvas.getContext('2d');
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate viewport based on container width
+                const container = document.getElementById('pdfContainer');
+                const containerWidth = container ? container.clientWidth - 40 : 800;
                 const viewport = page.getViewport({ scale: 1 });
                 const scaleFactor = Math.min(containerWidth / viewport.width, scale);
                 
                 // Use device pixel ratio for crisp rendering
                 const devicePixelRatio = window.devicePixelRatio || 1;
-                const scaledViewport = page.getViewport({ scale: scaleFactor * devicePixelRatio });
+                const finalScale = scaleFactor * devicePixelRatio;
+                const scaledViewport = page.getViewport({ scale: finalScale });
                 
                 // Set canvas dimensions for high DPI
                 canvas.height = scaledViewport.height;
                 canvas.width = scaledViewport.width;
-                canvas.style.height = scaledViewport.height / devicePixelRatio + 'px';
-                canvas.style.width = scaledViewport.width / devicePixelRatio + 'px';
+                canvas.style.height = (scaledViewport.height / devicePixelRatio) + 'px';
+                canvas.style.width = (scaledViewport.width / devicePixelRatio) + 'px';
                 
-                // Scale the drawing context for crisp rendering
-                const context = canvas.getContext('2d');
-                context.scale(devicePixelRatio, devicePixelRatio);
+                // Reset transform and apply device pixel scaling
+                context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
                 
                 // Render page with high quality
                 const renderContext = {
@@ -554,6 +588,48 @@
         async function resetZoom() {
             scale = 1.5; // Reset to default
             await renderPage();
+        }
+        
+        // Toggle between canvas and iframe modes
+        function toggleViewMode() {
+            const canvasEl = document.getElementById('pdfCanvas');
+            const iframeEl = document.getElementById('pdfIframe');
+            const viewModeBtn = document.getElementById('viewModeBtn');
+            const zoomControls = ['zoomOutBtn', 'resetBtn', 'zoomInBtn'];
+            
+            if (currentMode === 'canvas') {
+                // Switch to iframe mode (clickable links)
+                canvasEl.style.display = 'none';
+                iframeEl.style.display = 'block';
+                viewModeBtn.innerHTML = '📄 Switch to High Quality Mode';
+                currentMode = 'iframe';
+                
+                // Hide zoom controls in iframe mode
+                zoomControls.forEach(id => {
+                    document.getElementById(id).style.display = 'none';
+                });
+                
+                console.log('🔗 Switched to Interactive Mode - Links are clickable');
+                
+            } else {
+                // Switch to canvas mode (high quality)
+                canvasEl.style.display = 'block';
+                iframeEl.style.display = 'none';
+                viewModeBtn.innerHTML = '🔗 Switch to Interactive Mode';
+                currentMode = 'canvas';
+                
+                // Show zoom controls in canvas mode
+                zoomControls.forEach(id => {
+                    document.getElementById(id).style.display = 'inline-flex';
+                });
+                
+                // Re-render canvas if needed
+                if (pdfDoc) {
+                    setTimeout(() => renderPage(), 100);
+                }
+                
+                console.log('📄 Switched to High Quality Mode - Enhanced clarity');
+            }
         }
         
         function showPDFViewer() {
