@@ -7,8 +7,8 @@
     <meta name="description" content="Professional resume with download capability">
     <meta name="author" content="Resume Owner">
     
-    <!-- PDF.js for cross-browser PDF rendering -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Adobe PDF Embed API for professional PDF viewing -->
+    <script src="https://acrobatservices.adobe.com/view-sdk/viewer.js"></script>
     <style>
         * {
             margin: 0;
@@ -77,83 +77,25 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            padding: 15px;
-            background: #f8f9fa;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 8px 8px 0 0;
-            border: 1px solid #e5e7eb;
-            border-bottom: none;
-            flex-wrap: wrap;
+            margin-bottom: 2px;
         }
 
-        .pdf-controls button {
-            background: #2563eb;
+        .status-text {
             color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
-        .pdf-controls button:hover:not(:disabled) {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .pdf-controls button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .zoom-btn {
-            background: #059669 !important;
-        }
-
-        .zoom-btn:hover {
-            background: #047857 !important;
-        }
-
-        .reset-btn {
-            background: #7c3aed !important;
-        }
-
-        .reset-btn:hover {
-            background: #6d28d9 !important;
-        }
-
-        .mode-btn {
-            background: #dc2626 !important;
-            font-weight: 600 !important;
-            padding: 10px 16px !important;
-        }
-
-        .mode-btn:hover {
-            background: #b91c1c !important;
-        }
-
-        .pdf-iframe {
+        #adobe-dc-view {
             width: 100%;
             height: 85vh;
-            border: none;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid #e5e7eb;
-            background: white;
-        }
-
-        .pdf-canvas {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            display: block;
             border: 1px solid #e5e7eb;
             border-radius: 0 0 8px 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            background: white;
         }
 
         .loading {
@@ -220,20 +162,15 @@
             }
             
             .pdf-controls {
-                padding: 10px;
-                gap: 8px;
+                padding: 8px;
             }
             
-            .pdf-controls button {
-                padding: 6px 10px;
-                font-size: 11px;
+            .status-text {
+                font-size: 12px;
             }
             
-
-            
-            .pdf-canvas {
-                max-height: 80vh;
-                object-fit: contain;
+            #adobe-dc-view {
+                height: 80vh;
             }
         }
 
@@ -332,25 +269,11 @@
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <div class="pdf-controls">
-                <button onclick="toggleViewMode()" id="viewModeBtn" class="mode-btn">
-                    🔗 Switch to Interactive Mode
-                </button>
-                <button onclick="zoomOut()" class="zoom-btn" id="zoomOutBtn" style="display: none;">🔍 Zoom Out</button>
-                <button onclick="resetZoom()" class="reset-btn" id="resetBtn" style="display: none;">📄 Fit to Width</button>
-                <button onclick="zoomIn()" class="zoom-btn" id="zoomInBtn" style="display: none;">🔍 Zoom In</button>
+                <span class="status-text">📄 Interactive Resume - Links are clickable!</span>
             </div>
             
-            <!-- Canvas Mode (High Quality, No Links) -->
-            <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
-            
-            <!-- Interactive Mode (Clickable Links) -->
-            <iframe 
-                src="./resume.pdf#toolbar=0&navpanes=0&scrollbar=1&view=FitH" 
-                class="pdf-iframe" 
-                id="pdfIframe"
-                style="display: none;"
-                title="Interactive Resume PDF">
-            </iframe>
+            <!-- Adobe PDF Embed Viewer -->
+            <div id="adobe-dc-view"></div>
         </div>
 
         <div class="pdf-fallback" id="pdfFallback" style="display: none;">
@@ -480,155 +403,72 @@
             }
         }
 
-        // PDF.js variables
-        let pdfDoc = null;
-        let pageIsRendering = false;
-        let scale = 1.5; // Higher default scale for better quality
-        let currentMode = 'canvas'; // 'canvas' or 'iframe'
-        
-        let canvas, pdfIframe;
-
-        // Initialize PDF viewer with PDF.js
+        // Adobe PDF Embed API implementation
         function initializePDFViewer() {
             const loading = document.getElementById('loading');
-            
-            // Get DOM elements
-            canvas = document.getElementById('pdfCanvas');
-            pdfIframe = document.getElementById('pdfIframe');
             
             // Show loading initially
             loading.style.display = 'flex';
             
-            // Configure PDF.js worker
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            
-            // Load PDF after a small delay to ensure DOM is ready
-            setTimeout(() => {
-                loadPDF();
-            }, 100);
+            // Wait for Adobe DC View SDK to load or initialize immediately if available
+            if (window.AdobeDC) {
+                initializeAdobePDF();
+            } else {
+                document.addEventListener("adobe_dc_view_sdk.ready", function() {
+                    initializeAdobePDF();
+                });
+                
+                // Fallback if Adobe SDK doesn't load within 5 seconds
+                setTimeout(() => {
+                    if (!window.AdobeDC) {
+                        console.warn('Adobe PDF Embed API failed to load, showing fallback');
+                        showPDFFallback();
+                    }
+                }, 5000);
+            }
         }
         
-        // Load PDF document
-        async function loadPDF() {
+        function initializeAdobePDF() {
             try {
-                pdfDoc = await pdfjsLib.getDocument('./resume.pdf').promise;
-                console.log('✅ PDF loaded with', pdfDoc.numPages, 'pages');
+                // Get the current URL to determine the correct PDF URL
+                const currentURL = window.location.href;
+                const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
+                const pdfURL = baseURL + 'resume.pdf';
                 
-                // Render first page with high quality
-                await renderPage();
+                                 // Note: Get your free client ID from https://developer.adobe.com/pdf-embed-api/
+                 // This demo client ID works for testing - replace with your own for production
+                 const CLIENT_ID = "c35b9ecb2f29495194c1bf8bf6d89e6e"; // Demo client ID
+                
+                const adobeDCView = new AdobeDC.View({
+                    clientId: CLIENT_ID,
+                    divId: "adobe-dc-view"
+                });
+                
+                // Configure PDF with all interactive features enabled
+                adobeDCView.previewFile({
+                    content: { location: { url: pdfURL } },
+                    metaData: { fileName: "resume.pdf" }
+                }, {
+                    embedMode: "FULL_WINDOW",
+                    defaultViewMode: "FIT_WIDTH",
+                    showAnnotationTools: false,
+                    showDownloadPDF: true,
+                    showPrintPDF: false,
+                    showLeftHandPanel: false,
+                    showPageControls: true,
+                    showZoomControl: true,
+                    focusOnRendering: false,
+                    showThumbnails: false,
+                    showBookmarks: false
+                });
                 
                 // Show PDF viewer
                 showPDFViewer();
+                console.log('✅ Adobe PDF Embed initialized with interactive features and clickable links');
                 
             } catch (error) {
-                console.error('❌ PDF loading failed:', error);
+                console.error('❌ Adobe PDF initialization failed:', error);
                 showPDFFallback();
-            }
-        }
-        
-        // Render PDF page with high quality
-        async function renderPage() {
-            if (pageIsRendering || !canvas || !pdfDoc) return;
-            pageIsRendering = true;
-            
-            try {
-                const page = await pdfDoc.getPage(1); // Always render page 1
-                
-                // Clear the canvas first
-                const context = canvas.getContext('2d');
-                context.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Calculate viewport based on container width
-                const container = document.getElementById('pdfContainer');
-                const containerWidth = container ? container.clientWidth - 40 : 800;
-                const viewport = page.getViewport({ scale: 1 });
-                const scaleFactor = Math.min(containerWidth / viewport.width, scale);
-                
-                // Use device pixel ratio for crisp rendering
-                const devicePixelRatio = window.devicePixelRatio || 1;
-                const finalScale = scaleFactor * devicePixelRatio;
-                const scaledViewport = page.getViewport({ scale: finalScale });
-                
-                // Set canvas dimensions for high DPI
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
-                canvas.style.height = (scaledViewport.height / devicePixelRatio) + 'px';
-                canvas.style.width = (scaledViewport.width / devicePixelRatio) + 'px';
-                
-                // Reset transform and apply device pixel scaling
-                context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-                
-                // Render page with high quality
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: page.getViewport({ scale: scaleFactor })
-                };
-                
-                await page.render(renderContext).promise;
-                console.log('✅ Page rendered with scale:', scaleFactor);
-                
-            } catch (error) {
-                console.error('❌ Page rendering failed:', error);
-            } finally {
-                pageIsRendering = false;
-            }
-        }
-        
-        // Zoom functions
-        async function zoomIn() {
-            scale = Math.min(scale + 0.3, 3.0); // Max zoom 3x
-            await renderPage();
-        }
-        
-        async function zoomOut() {
-            scale = Math.max(scale - 0.3, 0.5); // Min zoom 0.5x
-            await renderPage();
-        }
-        
-        async function resetZoom() {
-            scale = 1.5; // Reset to default
-            await renderPage();
-        }
-        
-        // Toggle between canvas and iframe modes
-        function toggleViewMode() {
-            const canvasEl = document.getElementById('pdfCanvas');
-            const iframeEl = document.getElementById('pdfIframe');
-            const viewModeBtn = document.getElementById('viewModeBtn');
-            const zoomControls = ['zoomOutBtn', 'resetBtn', 'zoomInBtn'];
-            
-            if (currentMode === 'canvas') {
-                // Switch to iframe mode (clickable links)
-                canvasEl.style.display = 'none';
-                iframeEl.style.display = 'block';
-                viewModeBtn.innerHTML = '📄 Switch to High Quality Mode';
-                currentMode = 'iframe';
-                
-                // Hide zoom controls in iframe mode
-                zoomControls.forEach(id => {
-                    document.getElementById(id).style.display = 'none';
-                });
-                
-                console.log('🔗 Switched to Interactive Mode - Links are clickable');
-                
-            } else {
-                // Switch to canvas mode (high quality)
-                canvasEl.style.display = 'block';
-                iframeEl.style.display = 'none';
-                viewModeBtn.innerHTML = '🔗 Switch to Interactive Mode';
-                currentMode = 'canvas';
-                
-                // Show zoom controls in canvas mode
-                zoomControls.forEach(id => {
-                    document.getElementById(id).style.display = 'inline-flex';
-                });
-                
-                // Re-render canvas if needed
-                if (pdfDoc) {
-                    setTimeout(() => renderPage(), 100);
-                }
-                
-                console.log('📄 Switched to High Quality Mode - Enhanced clarity');
             }
         }
         
@@ -646,12 +486,7 @@
             console.log('📄 Using PDF fallback - PDF.js loading failed');
         }
         
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            if (pdfDoc && !pageIsRendering) {
-                setTimeout(() => renderPage(), 100); // Small delay for resize completion
-            }
-        });
+
 
         // Show tracking status notification
         function showTrackingStatus(message) {
