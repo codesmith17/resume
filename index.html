@@ -155,6 +155,78 @@
             border-radius: 10px;
             margin: 20px 0;
         }
+
+        .pdf-fallback {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .fallback-content h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .fallback-content p {
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .fallback-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .view-btn, .download-btn-fallback {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .view-btn {
+            background: #059669;
+        }
+
+        .view-btn:hover {
+            background: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+        }
+
+        .download-btn-fallback:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        @media (max-width: 480px) {
+            .fallback-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .view-btn, .download-btn-fallback {
+                width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -168,15 +240,31 @@
 
         <div class="loading" id="loading">Loading resume...</div>
         
-        <iframe 
-            src="./resume.pdf#view=FitH" 
-            class="pdf-viewer" 
-            id="pdfViewer"
-            style="display: none;"
-            title="Resume PDF Viewer"
-            onload="handlePDFLoad()"
-            onerror="handlePDFError()">
-        </iframe>
+        <div class="pdf-container" id="pdfContainer" style="display: none;">
+            <iframe 
+                src="./resume.pdf" 
+                class="pdf-viewer" 
+                id="pdfViewer"
+                title="Resume PDF Viewer">
+            </iframe>
+        </div>
+
+        <div class="pdf-fallback" id="pdfFallback" style="display: none;">
+            <div class="fallback-content">
+                <h3>📄 Resume Preview</h3>
+                <p>Click the button below to view or download the resume:</p>
+                <div class="fallback-buttons">
+                    <a href="./resume.pdf" target="_blank" class="view-btn">
+                        <span>👀</span>
+                        View in New Tab
+                    </a>
+                    <button class="download-btn-fallback" onclick="downloadPDF()">
+                        <span>📥</span>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div class="error-message" id="errorMessage" style="display: none;">
             <h3>Unable to load PDF</h3>
@@ -198,6 +286,7 @@
         // Initialize tracking when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeTracking();
+            initializePDFViewer();
         });
 
         // Initialize tracking system
@@ -287,18 +376,71 @@
             }
         }
 
-        // Handle PDF load success
-        function handlePDFLoad() {
+        // Initialize PDF viewer with fallback handling
+        function initializePDFViewer() {
+            const loading = document.getElementById('loading');
+            const pdfContainer = document.getElementById('pdfContainer');
+            const pdfFallback = document.getElementById('pdfFallback');
+            const pdfViewer = document.getElementById('pdfViewer');
+            
+            // Show loading initially
+            loading.style.display = 'flex';
+            
+            // Try to load PDF in iframe
+            let pdfLoaded = false;
+            let fallbackTimer;
+            
+            // Set a timeout to show fallback if PDF doesn't load quickly
+            fallbackTimer = setTimeout(() => {
+                if (!pdfLoaded) {
+                    showPDFFallback();
+                }
+            }, 3000); // 3 second timeout
+            
+            // Listen for iframe load
+            pdfViewer.onload = function() {
+                // Check if the iframe actually loaded content
+                try {
+                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
+                    if (iframeDoc && iframeDoc.body) {
+                        // PDF loaded successfully
+                        pdfLoaded = true;
+                        clearTimeout(fallbackTimer);
+                        showPDFViewer();
+                    } else {
+                        // Iframe loaded but no content
+                        showPDFFallback();
+                    }
+                } catch (e) {
+                    // Cross-origin or other error, but iframe loaded
+                    pdfLoaded = true;
+                    clearTimeout(fallbackTimer);
+                    showPDFViewer();
+                }
+            };
+            
+            // Listen for iframe error
+            pdfViewer.onerror = function() {
+                clearTimeout(fallbackTimer);
+                showPDFFallback();
+            };
+            
+            // Force load the PDF
+            pdfViewer.src = './resume.pdf';
+        }
+        
+        function showPDFViewer() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('pdfContainer').style.display = 'block';
+            document.getElementById('pdfFallback').style.display = 'none';
             console.log('✅ PDF loaded successfully');
         }
-
-        // Handle PDF load error
-        function handlePDFError() {
+        
+        function showPDFFallback() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'block';
-            console.warn('⚠️ PDF failed to load');
+            document.getElementById('pdfContainer').style.display = 'none';
+            document.getElementById('pdfFallback').style.display = 'block';
+            console.log('📄 Using PDF fallback - iframe loading failed');
         }
 
         // Show tracking status notification
