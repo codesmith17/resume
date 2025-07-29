@@ -354,20 +354,26 @@
             
             .resume-container {
                 padding: 8px;
-                margin: 0;
+                margin: 0 auto;
                 max-width: 100vw;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             .controls {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                justify-content: center;
                 gap: 8px;
                 margin-bottom: 12px;
                 padding: 12px;
                 background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
                 border-radius: 8px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                text-align: center;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             .download-btn {
@@ -375,7 +381,10 @@
                 max-width: 280px;
                 padding: 12px 20px;
                 font-size: 15px;
-                margin: 0;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .portfolio-btn {
@@ -383,7 +392,10 @@
                 max-width: 280px;
                 padding: 12px 20px;
                 font-size: 15px;
-                margin: 0;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             #adobe-dc-view {
@@ -486,6 +498,18 @@
                 height: 18px;
             }
 
+            /* Button centering for all mobile sizes */
+            @media (max-width: 600px) {
+                .controls {
+                    margin: 0 auto 12px auto;
+                    padding: 16px;
+                }
+
+                .download-btn, .portfolio-btn {
+                    margin: 0 auto;
+                }
+            }
+
             /* Extra small devices and emulator fix */
             @media (max-width: 350px) {
                 .resume-footer {
@@ -506,6 +530,15 @@
 
                 .footer-info p {
                     font-size: 11px;
+                }
+
+                .controls {
+                    padding: 12px;
+                }
+
+                .download-btn, .portfolio-btn {
+                    max-width: 260px;
+                    padding: 10px 16px;
                 }
             }
         }
