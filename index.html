@@ -112,6 +112,19 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
+        /* Hide Adobe expand/fullscreen buttons globally for clean look */
+        #adobe-dc-view .dc-fullscreen-btn,
+        #adobe-dc-view .dc-expand-btn,
+        #adobe-dc-view [data-testid="fullscreen-button"],
+        #adobe-dc-view [data-testid="expand-button"],
+        #adobe-dc-view button[title*="full"],
+        #adobe-dc-view button[title*="expand"],
+        #adobe-dc-view .fullscreen-button,
+        #adobe-dc-view .expand-button {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
         .loading {
             display: flex;
             justify-content: center;
@@ -298,16 +311,29 @@
             }
             
             #adobe-dc-view {
-                height: calc(100vh - 140px) !important; /* Reduce height to minimize empty space */
+                height: calc(100vh - 130px) !important; /* Optimized height for clean mobile view */
                 border-radius: 8px;
                 border: none;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                overflow: auto;
+                overflow: hidden; /* Hide any scrollbars for cleaner look */
             }
             
-            /* Hide Adobe branding on mobile for cleaner look */
-            #adobe-dc-view .dc-panel-bottom {
+            /* Hide ALL Adobe UI elements on mobile for ultra-clean look */
+            #adobe-dc-view .dc-panel-bottom,
+            #adobe-dc-view .dc-top-bar,
+            #adobe-dc-view .dc-page-controls,
+            #adobe-dc-view .dc-zoom-controls,
+            #adobe-dc-view .dc-fullscreen-btn,
+            #adobe-dc-view .dc-expand-btn,
+            #adobe-dc-view .dc-toolbar,
+            #adobe-dc-view [data-testid="fullscreen-button"],
+            #adobe-dc-view [data-testid="expand-button"],
+            #adobe-dc-view button[title*="full"],
+            #adobe-dc-view button[title*="expand"],
+            #adobe-dc-view .fullscreen-button,
+            #adobe-dc-view .expand-button {
                 display: none !important;
+                visibility: hidden !important;
             }
             
             .pdf-container {
@@ -594,26 +620,44 @@
                 // Detect mobile device for optimized viewing
                 const isMobile = window.innerWidth <= 480;
                 
-                // Configure PDF with mobile-optimized settings
+                // Configure PDF with minimal UI - especially for mobile
                 adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
                 }, {
-                    embedMode: isMobile ? "SIZED_CONTAINER" : "FULL_WINDOW",
+                    embedMode: isMobile ? "IN_LINE" : "FULL_WINDOW",
                     defaultViewMode: "FIT_WIDTH",
                     showAnnotationTools: false,
-                    showDownloadPDF: !isMobile, // Hide Adobe's download on mobile, use our custom button
+                    showDownloadPDF: false, // Hide all Adobe download buttons
                     showPrintPDF: false,
                     showLeftHandPanel: false,
-                    showPageControls: !isMobile,
-                    showZoomControl: !isMobile,
+                    showPageControls: false, // Hide all page controls including expand
+                    showZoomControl: false, // Hide zoom controls
                     focusOnRendering: false,
                     showThumbnails: false,
-                    showBookmarks: false
+                    showBookmarks: false,
+                    showFullScreen: false, // Explicitly hide fullscreen/expand button
+                    enableFormFilling: false
                 });
                 
                 // Show PDF viewer
                 showPDFViewer();
+                
+                // Aggressively hide any remaining Adobe controls after load
+                setTimeout(() => {
+                    const hideButtons = [
+                        '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
+                        '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
+                        'button[title*="full"]', 'button[title*="expand"]', 'button[title*="Full"]'
+                    ];
+                    
+                    hideButtons.forEach(selector => {
+                        document.querySelectorAll(selector).forEach(el => {
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                        });
+                    });
+                }, 1000);
                 
             } catch (error) {
                 showPDFFallback();
