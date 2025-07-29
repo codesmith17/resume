@@ -18,7 +18,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
+            background: #f8f9fa;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -179,48 +179,69 @@
         }
 
         .resume-footer {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2d3748;
             color: white;
-            padding: 20px 0;
+            padding: 25px 0;
             margin-top: 20px;
             text-align: center;
+            width: 100%;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
 
         .footer-content {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
+        .footer-info {
+            margin-bottom: 20px;
+        }
+
+        .footer-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
         .footer-info p {
-            margin: 8px 0;
+            margin: 5px 0;
             font-size: 14px;
+            color: #a0aec0;
         }
 
         .footer-links {
-            margin-top: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 12px;
+            gap: 30px;
             flex-wrap: wrap;
         }
 
         .footer-links a {
             color: white;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
-            transition: opacity 0.2s ease;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
         }
 
         .footer-links a:hover {
-            opacity: 0.8;
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
         }
 
-        .footer-links span {
-            color: rgba(255,255,255,0.6);
-            font-weight: bold;
+        .social-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
 
         @media (max-width: 768px) {
@@ -363,7 +384,7 @@
             }
             
             #adobe-dc-view {
-                height: calc(100vh - 200px) !important; /* Leave space for footer */
+                height: calc(100vh - 250px) !important; /* Leave space for footer */
                 border-radius: 8px;
                 border: none;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -426,22 +447,38 @@
             }
 
             .resume-footer {
-                padding: 15px 0;
-                margin-top: 15px;
+                padding: 20px 0;
+                margin-top: 0;
+                width: 100vw;
+                margin-left: -8px;
+                margin-right: -8px;
+            }
+
+            .footer-info h3 {
+                font-size: 16px;
+                margin-bottom: 8px;
             }
 
             .footer-info p {
-                font-size: 13px;
-                margin: 6px 0;
+                font-size: 12px;
+                margin: 4px 0;
             }
 
             .footer-links {
-                margin-top: 12px;
-                gap: 8px;
+                gap: 15px;
+                flex-direction: column;
             }
 
             .footer-links a {
-                font-size: 12px;
+                font-size: 13px;
+                padding: 10px 20px;
+                width: 200px;
+                justify-content: center;
+            }
+
+            .social-icon {
+                width: 18px;
+                height: 18px;
             }
         }
 
@@ -480,7 +517,18 @@
             }
 
             .resume-footer {
-                padding: 18px 0;
+                padding: 22px 0;
+                width: 100vw;
+                margin-left: -12px;
+                margin-right: -12px;
+            }
+
+            .footer-links {
+                gap: 20px;
+            }
+
+            .footer-links a {
+                padding: 10px 18px;
             }
         }
     </style>
@@ -528,19 +576,33 @@
         </div>
     </div>
 
-    <!-- Footer to eliminate bottom white space -->
+    <!-- Professional Footer -->
     <footer class="resume-footer">
         <div class="footer-content">
             <div class="footer-info">
-                <p>📄 <strong>Krishna Tripathi</strong> - Software Engineer</p>
-                <p>💼 Available for opportunities | 📧 Contact via portfolio</p>
+                <h3>Krishna Tripathi</h3>
+                <p>Software Engineer • Available for opportunities</p>
+                <p>Let's connect and discuss exciting opportunities</p>
             </div>
             <div class="footer-links">
-                <a href="https://krishna-tripathi.vercel.app/" target="_blank">🌐 Portfolio</a>
-                <span>•</span>
-                <a href="https://linkedin.com/in/krishnatripathi17" target="_blank">💼 LinkedIn</a>
-                <span>•</span>
-                <a href="https://github.com/codesmith17" target="_blank">💻 GitHub</a>
+                <a href="https://krishna-tripathi.vercel.app/" target="_blank">
+                    <svg class="social-icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Portfolio
+                </a>
+                <a href="https://linkedin.com/in/krishnatripathi17" target="_blank">
+                    <svg class="social-icon" viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    LinkedIn
+                </a>
+                <a href="https://github.com/codesmith17" target="_blank">
+                    <svg class="social-icon" viewBox="0 0 24 24">
+                        <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.300 24 12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </a>
             </div>
         </div>
     </footer>
