@@ -25,6 +25,7 @@
             align-items: center;
             padding: 20px;
             margin: 0;
+            overflow-x: hidden;
         }
 
         .resume-container {
@@ -186,6 +187,8 @@
             text-align: center;
             width: 100%;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .footer-content {
@@ -449,9 +452,11 @@
             .resume-footer {
                 padding: 20px 0;
                 margin-top: 0;
-                width: 100vw;
+                width: 100%;
                 margin-left: -8px;
                 margin-right: -8px;
+                box-sizing: border-box;
+                overflow-x: hidden;
             }
 
             .footer-info h3 {
@@ -479,6 +484,29 @@
             .social-icon {
                 width: 18px;
                 height: 18px;
+            }
+
+            /* Extra small devices and emulator fix */
+            @media (max-width: 350px) {
+                .resume-footer {
+                    margin-left: -4px;
+                    margin-right: -4px;
+                    padding: 15px 0;
+                }
+
+                .footer-links a {
+                    width: 180px;
+                    font-size: 12px;
+                    padding: 8px 16px;
+                }
+
+                .footer-info h3 {
+                    font-size: 15px;
+                }
+
+                .footer-info p {
+                    font-size: 11px;
+                }
             }
         }
 
@@ -518,9 +546,11 @@
 
             .resume-footer {
                 padding: 22px 0;
-                width: 100vw;
+                width: 100%;
                 margin-left: -12px;
                 margin-right: -12px;
+                box-sizing: border-box;
+                overflow-x: hidden;
             }
 
             .footer-links {
