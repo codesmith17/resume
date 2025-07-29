@@ -40,10 +40,14 @@
 
         .controls {
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             align-items: center;
             margin-bottom: 20px;
             gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
 
         .download-btn {
@@ -174,6 +178,51 @@
             20%, 80% { opacity: 1; transform: translateY(0); }
         }
 
+        .resume-footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-info p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .footer-links {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            opacity: 0.8;
+        }
+
+        .footer-links span {
+            color: rgba(255,255,255,0.6);
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -291,7 +340,10 @@
                 align-items: center;
                 gap: 8px;
                 margin-bottom: 12px;
-                padding: 8px 0;
+                padding: 12px;
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             }
             
             .download-btn {
@@ -311,7 +363,7 @@
             }
             
             #adobe-dc-view {
-                height: calc(100vh - 130px) !important; /* Optimized height for clean mobile view */
+                height: calc(100vh - 200px) !important; /* Leave space for footer */
                 border-radius: 8px;
                 border: none;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -372,6 +424,25 @@
                 font-size: 11px;
                 padding: 8px 12px;
             }
+
+            .resume-footer {
+                padding: 15px 0;
+                margin-top: 15px;
+            }
+
+            .footer-info p {
+                font-size: 13px;
+                margin: 6px 0;
+            }
+
+            .footer-links {
+                margin-top: 12px;
+                gap: 8px;
+            }
+
+            .footer-links a {
+                font-size: 12px;
+            }
         }
 
         /* Tablet optimization */
@@ -388,6 +459,10 @@
                 justify-content: center;
                 margin-bottom: 16px;
                 gap: 12px;
+                padding: 14px;
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                border-radius: 10px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             }
             
             .download-btn, .portfolio-btn {
@@ -402,6 +477,10 @@
             
             .pdf-container {
                 border-radius: 8px;
+            }
+
+            .resume-footer {
+                padding: 18px 0;
             }
         }
     </style>
@@ -449,7 +528,22 @@
         </div>
     </div>
 
-
+    <!-- Footer to eliminate bottom white space -->
+    <footer class="resume-footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p>📄 <strong>Krishna Tripathi</strong> - Software Engineer</p>
+                <p>💼 Available for opportunities | 📧 Contact via portfolio</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://krishna-tripathi.vercel.app/" target="_blank">🌐 Portfolio</a>
+                <span>•</span>
+                <a href="https://linkedin.com/in/krishnatripathi17" target="_blank">💼 LinkedIn</a>
+                <span>•</span>
+                <a href="https://github.com/codesmith17" target="_blank">💻 GitHub</a>
+            </div>
+        </div>
+    </footer>
 
     <div class="tracking-status" id="trackingStatus">
         📊 Visitor data tracked successfully
