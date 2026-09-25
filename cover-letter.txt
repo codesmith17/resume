@@ -1,0 +1,18 @@
+Krishna Tripathi
+Software Engineer
+kanchanlatakrishna@gmail.com | krishna-tripathi.vercel.app
+
+September 25, 2026
+
+Dear Hiring Manager,
+
+I am writing to express my interest in software engineering opportunities where I can build reliable products across backend systems, developer tooling, and thoughtful user experiences.
+
+In my current work at Yugabyte, I build distributed systems and AI-focused capabilities using Go, Java, React, Python, and YugabyteDB. I have delivered authentication flows across multiple identity providers, contributed integrations to LangChain4j, and built internal tooling that helps engineering teams diagnose failures and move faster.
+
+I enjoy working across the stack, from designing APIs and data flows to shaping the interface that makes a product understandable. I bring a practical, ownership-oriented approach to ambiguous problems and care deeply about maintainable code, clear communication, and useful outcomes.
+
+I would welcome the opportunity to discuss how my experience could support your team. Thank you for your time and consideration.
+
+Sincerely,
+Krishna Tripathi
