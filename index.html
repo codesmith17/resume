@@ -906,8 +906,10 @@
         const resumeToggle = document.getElementById('resumeToggle');
         const letterToggle = document.getElementById('letterToggle');
         const letterPanel = document.getElementById('letterPanel');
+        let currentView = 'resume';
         const resumeContent = [document.getElementById('loading'), document.getElementById('pdfContainer'), document.getElementById('pdfFallback'), document.getElementById('errorMessage')];
         function showResume() {
+            currentView = 'resume';
             resumeContent.forEach((element) => element.classList.remove('content-hidden'));
             letterPanel.classList.add('content-hidden');
             document.getElementById('currentDownloadLabel').textContent = 'Download resume';
@@ -919,6 +921,7 @@
             letterToggle.setAttribute('aria-selected', 'false');
         }
         function showLetter() {
+            currentView = 'cover-letter';
             resumeContent.forEach((element) => element.classList.add('content-hidden'));
             letterPanel.classList.remove('content-hidden');
             document.getElementById('currentDownloadLabel').textContent = 'Download cover letter';
@@ -932,11 +935,14 @@
         resumeToggle.addEventListener('click', showResume);
         letterToggle.addEventListener('click', showLetter);
         document.getElementById('currentDownload').addEventListener('click', () => {
-            if (letterToggle.getAttribute('aria-pressed') === 'true') {
+            if (currentView === 'cover-letter') {
                 const link = document.createElement('a');
                 link.href = './cover-letter.txt';
                 link.download = 'KRISHNA-TRIPATHI-COVER-LETTER.txt';
+                link.style.display = 'none';
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
             } else {
                 downloadPDF();
             }
