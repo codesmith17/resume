@@ -1055,7 +1055,7 @@
                 const isMobile = window.innerWidth <= 480;
                 
                 // Configure PDF with minimal UI - especially for mobile
-                adobeDCView.previewFile({
+                let previewPromise = adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
                 }, {
@@ -1073,12 +1073,31 @@
                     showFullScreen: false, // Explicitly hide fullscreen/expand button
                     enableFormFilling: false
                 });
-                
-                // Show PDF viewer
-                showPDFViewer();
-                
-                // Aggressively hide any remaining Adobe controls after load
-                setTimeout(() => {
+
+                // Failsafe: if Adobe gets completely stuck due to blocked connections
+                const stuckTimeout = setTimeout(() => {
+                    console.warn('Adobe SDK seems stuck. Showing fallback.');
+                    showPDFFallback();
+                }, 6000);
+
+                // Some versions of View SDK don't return a promise, so we handle both safely
+                if (previewPromise && previewPromise.then) {
+                    previewPromise.then(() => {
+                        clearTimeout(stuckTimeout);
+                        showPDFViewer();
+                        setTimeout(hideAdobeControls, 1000);
+                    }).catch((err) => {
+                        clearTimeout(stuckTimeout);
+                        console.error('Adobe PDF failed to preview (Promise rejected):', err);
+                        showPDFFallback();
+                    });
+                } else {
+                    clearTimeout(stuckTimeout);
+                    showPDFViewer();
+                    setTimeout(hideAdobeControls, 1000);
+                }
+
+                function hideAdobeControls() {
                     const hideButtons = [
                         '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
                         '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
@@ -1091,7 +1110,7 @@
                             el.style.visibility = 'hidden';
                         });
                     });
-                }, 1000);
+                }
                 
             } catch (error) {
                 showPDFFallback();
