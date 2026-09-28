@@ -577,12 +577,10 @@
         .controls { flex-wrap: wrap; }
         .controls button, .controls a { min-height: 42px; }
         .icon { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .theme-btn { width: 42px; padding: 10px; justify-content: center; position: relative; overflow: hidden; }
-        .theme-btn .icon { position: absolute; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.26, 1.55), opacity 0.6s ease; }
-        .theme-btn .sun-icon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
-        .theme-btn .moon-icon { opacity: 1; transform: rotate(0) scale(1); }
-        [data-theme="dark"] .theme-btn .moon-icon { opacity: 0; transform: rotate(90deg) scale(0.5); }
-        [data-theme="dark"] .theme-btn .sun-icon { opacity: 1; transform: rotate(0) scale(1); }
+        .theme-btn { width: 42px; padding: 10px; justify-content: center; }
+        .theme-btn .sun-icon { display: none; }
+        [data-theme="dark"] .theme-btn .moon-icon { display: none; }
+        [data-theme="dark"] .theme-btn .sun-icon { display: block; }
         .view-toggle { background: transparent; border: 1px solid var(--line); color: var(--text); padding: 10px 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; }
         .view-toggle.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .view-toggle, .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] { position: relative; transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
@@ -697,8 +695,8 @@
                 }
 
                 @keyframes theme-reveal {
-                    from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
-                    to { clip-path: polygon(0 0, 200% 0, 0 200%, 0 100%); }
+                    from { clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%)); }
+                    to { clip-path: circle(150vmax at var(--theme-x, 50%) var(--theme-y, 50%)); }
                 }
             }
         }
@@ -726,11 +724,11 @@
             }
             .controls #themeToggle {
                 grid-area: theme;
-                position: relative;
+                position: static;
                 width: 40px;
                 min-width: 40px;
                 height: 40px;
-                overflow: hidden;
+                overflow: visible;
                 clip: auto;
                 clip-path: none;
                 padding: 10px;
@@ -801,29 +799,71 @@
             }
         }
 
-        .cute-illustration {
-            margin-top: 15px;
+        /* ── Hire-Me Cartoon Animations ─────────────────────────────────── */
+        .hire-me-cartoon {
             display: flex;
             justify-content: center;
-            align-items: center;
-            animation: float-illustration 3s ease-in-out infinite;
+            margin-top: 16px;
         }
 
-        .cute-illustration svg {
-            width: 48px;
-            height: 48px;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        .hire-me-cartoon svg {
+            width: 160px;
+            height: 96px;
+            overflow: visible;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
         }
 
-        .cute-illustration:hover svg {
-            transform: scale(1.15) rotate(5deg);
+        /* Sign: gentle left-right sway */
+        .hire-me-cartoon .animated-sign {
+            transform-origin: 100px 70px;
+            animation: sign-sway 2.4s ease-in-out infinite;
         }
 
-        @keyframes float-illustration {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+        /* Character: smooth float up-down */
+        .hire-me-cartoon .character {
+            animation: char-float 2.8s ease-in-out infinite;
         }
+
+        /* Eye blink */
+        .hire-me-cartoon .eye-blink {
+            animation: eye-blink 3.5s ease-in-out infinite;
+        }
+
+        /* Antenna dot pulse */
+        .hire-me-cartoon .antenna-dot {
+            animation: antenna-pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes sign-sway {
+            0%,  100% { transform: rotate(-8deg); }
+            25%        { transform: rotate(0deg); }
+            50%        { transform: rotate(8deg); }
+            75%        { transform: rotate(0deg); }
+        }
+
+        @keyframes char-float {
+            0%,  100% { transform: translateY(0); }
+            50%        { transform: translateY(-6px); }
+        }
+
+        @keyframes eye-blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95%            { transform: scaleY(0.1); }
+        }
+
+        @keyframes antenna-pulse {
+            0%,  100% { opacity: 1;    transform: scale(1); }
+            50%        { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        /* Hover: speed everything up for a frantic wave */
+        .hire-me-cartoon:hover .animated-sign {
+            animation-duration: 0.9s;
+        }
+        .hire-me-cartoon:hover .character {
+            animation-duration: 1s;
+        }
+        /* ─────────────────────────────────────────────────────────────────── */
     </style>
     <script>
         (() => {
@@ -924,15 +964,27 @@
                 <h3>Krishna Tripathi</h3>
                 <p>Software Engineer • Available for opportunities</p>
                 <p>Let's connect and discuss exciting opportunities</p>
-                <div class="cute-illustration" title="Hire me!">
-                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M25 40H75C80.5228 40 85 44.4772 85 50V75C85 80.5228 80.5228 85 75 85H25C19.4772 85 15 80.5228 15 75V50C15 44.4772 19.4772 40 25 40Z" fill="#FACC15" stroke="#EAB308" stroke-width="4"/>
-                        <path d="M35 40V30C35 24.4772 39.4772 20 45 20H55C60.5228 20 65 24.4772 65 30V40" stroke="#FACC15" stroke-width="6" stroke-linecap="round"/>
-                        <circle cx="35" cy="55" r="5" fill="#334155"/>
-                        <circle cx="65" cy="55" r="5" fill="#334155"/>
-                        <path d="M45 65C45 65 48 70 50 70C52 70 55 65 55 65" stroke="#334155" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="25" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
-                        <circle cx="75" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
+                <div class="hire-me-cartoon" title="Looking for opportunities!">
+                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Sign that waves -->
+                        <g class="animated-sign">
+                            <rect x="50" y="10" width="100" height="40" rx="6" fill="var(--accent)" stroke="var(--text)" stroke-width="3"/>
+                            <text x="100" y="36" font-family="sans-serif" font-weight="900" font-size="18" fill="var(--panel-bg)" text-anchor="middle" letter-spacing="1">HIRE ME!</text>
+                            <line x1="100" y1="50" x2="100" y2="70" stroke="var(--text)" stroke-width="4" stroke-linecap="round"/>
+                        </g>
+                        <!-- Character/Robot -->
+                        <g class="character">
+                            <rect x="80" y="90" width="40" height="30" rx="8" fill="var(--muted)"/>
+                            <circle cx="100" cy="75" r="18" fill="var(--text)"/>
+                            <!-- Eyes -->
+                            <circle class="eye-blink" cx="93" cy="72" r="3" fill="var(--panel-bg)" style="transform-origin: 93px 72px;"/>
+                            <circle class="eye-blink" cx="107" cy="72" r="3" fill="var(--panel-bg)" style="transform-origin: 107px 72px;"/>
+                            <!-- Smile -->
+                            <path d="M94 80 Q 100 86 106 80" stroke="var(--panel-bg)" stroke-width="2" stroke-linecap="round" fill="none"/>
+                            <!-- Antenna -->
+                            <line x1="100" y1="57" x2="100" y2="45" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/>
+                            <circle class="antenna-dot" cx="100" cy="43" r="4" fill="var(--accent)" style="transform-origin: 100px 43px;"/>
+                        </g>
                     </svg>
                 </div>
             </div>
@@ -1060,7 +1112,7 @@
                 const isMobile = window.innerWidth <= 480;
                 
                 // Configure PDF with minimal UI - especially for mobile
-                let previewPromise = adobeDCView.previewFile({
+                adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
                 }, {
@@ -1078,31 +1130,12 @@
                     showFullScreen: false, // Explicitly hide fullscreen/expand button
                     enableFormFilling: false
                 });
-
-                // Failsafe: if Adobe gets completely stuck due to blocked connections
-                const stuckTimeout = setTimeout(() => {
-                    console.warn('Adobe SDK seems stuck. Showing fallback.');
-                    showPDFFallback();
-                }, 6000);
-
-                // Some versions of View SDK don't return a promise, so we handle both safely
-                if (previewPromise && previewPromise.then) {
-                    previewPromise.then(() => {
-                        clearTimeout(stuckTimeout);
-                        showPDFViewer();
-                        setTimeout(hideAdobeControls, 1000);
-                    }).catch((err) => {
-                        clearTimeout(stuckTimeout);
-                        console.error('Adobe PDF failed to preview (Promise rejected):', err);
-                        showPDFFallback();
-                    });
-                } else {
-                    clearTimeout(stuckTimeout);
-                    showPDFViewer();
-                    setTimeout(hideAdobeControls, 1000);
-                }
-
-                function hideAdobeControls() {
+                
+                // Show PDF viewer
+                showPDFViewer();
+                
+                // Aggressively hide any remaining Adobe controls after load
+                setTimeout(() => {
                     const hideButtons = [
                         '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
                         '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
@@ -1115,7 +1148,7 @@
                             el.style.visibility = 'hidden';
                         });
                     });
-                }
+                }, 1000);
                 
             } catch (error) {
                 showPDFFallback();
@@ -1208,6 +1241,5 @@
             }
         });
     </script>
-
 </body>
 </html>
