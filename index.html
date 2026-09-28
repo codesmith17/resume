@@ -577,10 +577,12 @@
         .controls { flex-wrap: wrap; }
         .controls button, .controls a { min-height: 42px; }
         .icon { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .theme-btn { width: 42px; padding: 10px; justify-content: center; }
-        .theme-btn .sun-icon { display: none; }
-        [data-theme="dark"] .theme-btn .moon-icon { display: none; }
-        [data-theme="dark"] .theme-btn .sun-icon { display: block; }
+        .theme-btn { width: 42px; padding: 10px; justify-content: center; position: relative; overflow: hidden; }
+        .theme-btn .icon { position: absolute; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.26, 1.55), opacity 0.6s ease; }
+        .theme-btn .sun-icon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+        .theme-btn .moon-icon { opacity: 1; transform: rotate(0) scale(1); }
+        [data-theme="dark"] .theme-btn .moon-icon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+        [data-theme="dark"] .theme-btn .sun-icon { opacity: 1; transform: rotate(0) scale(1); }
         .view-toggle { background: transparent; border: 1px solid var(--line); color: var(--text); padding: 10px 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; }
         .view-toggle.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .view-toggle, .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] { position: relative; transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
@@ -695,8 +697,8 @@
                 }
 
                 @keyframes theme-reveal {
-                    from { clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%)); }
-                    to { clip-path: circle(150vmax at var(--theme-x, 50%) var(--theme-y, 50%)); }
+                    from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+                    to { clip-path: polygon(0 0, 200% 0, 0 200%, 0 100%); }
                 }
             }
         }
@@ -724,11 +726,11 @@
             }
             .controls #themeToggle {
                 grid-area: theme;
-                position: static;
+                position: relative;
                 width: 40px;
                 min-width: 40px;
                 height: 40px;
-                overflow: visible;
+                overflow: hidden;
                 clip: auto;
                 clip-path: none;
                 padding: 10px;
@@ -799,30 +801,28 @@
             }
         }
 
-        .visitor-count {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+        .cute-illustration {
             margin-top: 15px;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            font-size: 14px;
-            color: #e2e8f0;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: float-illustration 3s ease-in-out infinite;
         }
 
-        .visitor-count:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+        .cute-illustration svg {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .views-icon {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
+        .cute-illustration:hover svg {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        @keyframes float-illustration {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
     </style>
     <script>
@@ -924,11 +924,16 @@
                 <h3>Krishna Tripathi</h3>
                 <p>Software Engineer • Available for opportunities</p>
                 <p>Let's connect and discuss exciting opportunities</p>
-                <div class="visitor-count" title="Public facing number of views">
-                    <svg class="icon views-icon" viewBox="0 0 24 24">
-                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                <div class="cute-illustration" title="Hire me!">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 40H75C80.5228 40 85 44.4772 85 50V75C85 80.5228 80.5228 85 75 85H25C19.4772 85 15 80.5228 15 75V50C15 44.4772 19.4772 40 25 40Z" fill="#FACC15" stroke="#EAB308" stroke-width="4"/>
+                        <path d="M35 40V30C35 24.4772 39.4772 20 45 20H55C60.5228 20 65 24.4772 65 30V40" stroke="#FACC15" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="35" cy="55" r="5" fill="#334155"/>
+                        <circle cx="65" cy="55" r="5" fill="#334155"/>
+                        <path d="M45 65C45 65 48 70 50 70C52 70 55 65 55 65" stroke="#334155" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="25" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
+                        <circle cx="75" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
                     </svg>
-                    <span id="views-container">Views: <span id="stats">...</span></span>
                 </div>
             </div>
             <div class="footer-links">
@@ -1204,35 +1209,5 @@
         });
     </script>
 
-    <!-- GoatCounter Analytics & Public Views -->
-    <script>
-        console.log("[GoatCounter Debug] Starting interval to check for window.goatcounter...");
-        var attempts = 0;
-        var t = setInterval(function() {
-            attempts++;
-            console.log("[GoatCounter Debug] Attempt " + attempts + ": checking window.goatcounter:", !!window.goatcounter, window.goatcounter);
-            if (window.goatcounter && window.goatcounter.visit_count) {
-                console.log("[GoatCounter Debug] visit_count function found. Appending views to #stats.");
-                clearInterval(t);
-                try {
-                    window.goatcounter.visit_count({
-                        append: '#stats',
-                        type: 'html',
-                        no_branding: true
-                    });
-                    console.log("[GoatCounter Debug] visit_count executed successfully.");
-                } catch(e) {
-                    console.error("[GoatCounter Debug] Error executing visit_count:", e);
-                }
-            } else if (attempts > 50) {
-                // After 5 seconds
-                console.warn("[GoatCounter Debug] GoatCounter failed to load after 5 seconds. Usually means it's blocked by an adblocker (ERR_BLOCKED_BY_CLIENT).");
-                clearInterval(t);
-                var statsEl = document.getElementById('stats');
-                if (statsEl) statsEl.innerText = "Unavailable (Blocked)";
-            }
-        }, 100);
-    </script>
-    <script data-goatcounter="https://codesmith17.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="console.log('[GoatCounter Debug] count.js loaded!')" onerror="console.error('[GoatCounter Debug] count.js failed to load. Adblocker?')"></script>
 </body>
 </html>
