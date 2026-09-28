@@ -606,6 +606,101 @@
         .download-bar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 12px 0; display: flex; justify-content: center; }
         .current-download { background: var(--accent); border: 1px solid var(--accent); border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; }
         .current-download:hover { filter: brightness(0.94); }
+
+        /* Shared interaction polish for the compact control surface. */
+        body, .resume-container, .controls, .letter-panel, .current-download, .theme-btn, .view-toggle, .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
+            transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+        }
+
+        .resume-container {
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+        }
+
+        .controls {
+            border: 1px solid var(--line);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        }
+
+        .theme-btn {
+            cursor: pointer;
+            transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .theme-btn:hover {
+            background: color-mix(in srgb, var(--accent) 10%, var(--panel-bg));
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.14);
+        }
+
+        .theme-btn:active,
+        .view-toggle:active,
+        .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"]:active,
+        .current-download:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .theme-btn:focus-visible,
+        .view-toggle:focus-visible,
+        .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"]:focus-visible,
+        .current-download:focus-visible {
+            outline: 3px solid color-mix(in srgb, var(--accent) 32%, transparent);
+            outline-offset: 2px;
+        }
+
+        .view-toggle:not(.is-active):hover {
+            background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg));
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .current-download:hover {
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+            transform: translateY(-1px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
+        }
+
+        @supports (view-transition-name: root) {
+            :root {
+                view-transition-name: root;
+            }
+
+            @media (prefers-reduced-motion: no-preference) {
+                ::view-transition-old(root),
+                ::view-transition-new(root) {
+                    animation-duration: 520ms;
+                    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+                }
+
+                ::view-transition-old(root) {
+                    animation-name: theme-fade-out;
+                }
+
+                ::view-transition-new(root) {
+                    animation-name: theme-reveal;
+                    z-index: 1;
+                }
+
+                @keyframes theme-fade-out {
+                    to { opacity: 0.94; }
+                }
+
+                @keyframes theme-reveal {
+                    from { clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%)); }
+                    to { clip-path: circle(150vmax at var(--theme-x, 50%) var(--theme-y, 50%)); }
+                }
+            }
+        }
+
         @media (max-width: 620px) {
             .controls {
                 display: grid;
@@ -667,6 +762,38 @@
             .view-toggle::after,
             .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"]::after {
                 display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .resume-container {
+                width: min(100%, 420px);
+                margin-inline: auto;
+                padding: 10px;
+                border-radius: 12px;
+            }
+
+            .controls {
+                width: 100%;
+                margin-bottom: 16px;
+                padding: 8px;
+                gap: 8px;
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                background: var(--panel-bg);
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+            }
+
+            .controls .view-toggle,
+            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
+                min-height: 40px;
+                border-radius: 8px;
+                justify-content: center;
+                text-align: center;
             }
         }
     </style>
@@ -959,9 +1086,22 @@
             themeToggle.setAttribute('aria-label', themeRoot.dataset.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
             themeToggle.addEventListener('click', () => {
                 const next = themeRoot.dataset.theme === 'dark' ? 'light' : 'dark';
-                themeRoot.dataset.theme = next;
-                localStorage.setItem('resume-theme', next);
-                themeToggle.setAttribute('aria-label', next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+                const applyTheme = () => {
+                    themeRoot.dataset.theme = next;
+                    localStorage.setItem('resume-theme', next);
+                    themeToggle.setAttribute('aria-label', next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+                };
+
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (!document.startViewTransition || reduceMotion) {
+                    applyTheme();
+                    return;
+                }
+
+                const bounds = themeToggle.getBoundingClientRect();
+                themeRoot.style.setProperty('--theme-x', `${bounds.left + bounds.width / 2}px`);
+                themeRoot.style.setProperty('--theme-y', `${bounds.top + bounds.height / 2}px`);
+                document.startViewTransition(applyTheme);
             });
         }
 
