@@ -563,24 +563,29 @@
                 padding: 10px 18px;
             }
         }
-        :root { color-scheme: light; --page-bg: #f8f9fa; --panel-bg: #ffffff; --text: #17202a; --muted: #5c6873; --line: #e1e8ed; --accent: #2563eb; }
-        [data-theme="dark"] { color-scheme: dark; --page-bg: #11161c; --panel-bg: #1b232c; --text: #f1f5f8; --muted: #a9b5bf; --line: #34414d; --accent: #72b8ee; }
+        :root { color-scheme: light; --page-bg: #f8f9fa; --panel-bg: #ffffff; --text: #17202a; --muted: #5c6873; --line: #e1e8ed; --accent: #2563eb; --footer-bg: #1e293b; --footer-text: #f1f5f8; --footer-muted: #94a3b8; }
+        [data-theme="dark"] { color-scheme: dark; --page-bg: #11161c; --panel-bg: #1b232c; --text: #f1f5f8; --muted: #a9b5bf; --line: #34414d; --accent: #72b8ee; --footer-bg: #0f172a; --footer-text: #f1f5f8; --footer-muted: #94a3b8; }
         body { background: var(--page-bg); color: var(--text); }
         .resume-container, .controls, .pdf-fallback { background: var(--panel-bg); border-color: var(--line); color: var(--text); }
         .controls { background: var(--panel-bg); }
         .pdf-container { background: var(--panel-bg); border-color: var(--line); }
         [data-theme="dark"] #adobe-dc-view { background: #11161c; }
-        .theme-btn, .cover-letter-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
-        .theme-btn:hover, .cover-letter-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .resume-footer { background: var(--panel-bg); border-top: 1px solid var(--line); color: var(--text); }
-        .footer-info h3, .footer-info p, .footer-links a { color: var(--text); }
+        .theme-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
+        .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .resume-footer { background: var(--footer-bg); color: var(--footer-text); border-top: none; }
+        .footer-info h3 { color: var(--footer-text); }
+        .footer-info p { color: var(--footer-muted); }
+        .footer-links a { color: var(--footer-text); background: rgba(255,255,255,0.08); }
+        .footer-links a:hover { background: rgba(255,255,255,0.16); }
         .controls { flex-wrap: wrap; }
         .controls button, .controls a { min-height: 42px; }
         .icon { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .theme-btn { width: 42px; padding: 10px; justify-content: center; }
-        .theme-btn .sun-icon { display: none; }
-        [data-theme="dark"] .theme-btn .moon-icon { display: none; }
-        [data-theme="dark"] .theme-btn .sun-icon { display: block; }
+        .theme-btn { width: 42px; padding: 10px; justify-content: center; position: relative; overflow: hidden; }
+        .theme-btn .icon { position: absolute; transition: transform 0.5s cubic-bezier(0.68,-0.55,0.26,1.55), opacity 0.45s ease; }
+        .theme-btn .sun-icon  { opacity: 0; transform: rotate(-90deg) scale(0.4); }
+        .theme-btn .moon-icon { opacity: 1; transform: rotate(0deg) scale(1); }
+        [data-theme="dark"] .theme-btn .moon-icon { opacity: 0; transform: rotate(90deg) scale(0.4); }
+        [data-theme="dark"] .theme-btn .sun-icon  { opacity: 1; transform: rotate(0deg) scale(1); }
         .view-toggle { background: transparent; border: 1px solid var(--line); color: var(--text); padding: 10px 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; }
         .view-toggle.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .view-toggle, .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] { position: relative; transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
@@ -598,11 +603,6 @@
         .letter-panel p { line-height: 1.75; margin: 0 0 18px; }
         .letter-signature { margin-top: 32px; }
         .content-hidden { display: none !important; }
-        .controls .download-btn, .controls .portfolio-btn, .controls .cover-letter-btn { border: 1px solid transparent; }
-        .controls .download-btn, .controls .portfolio-btn, .controls .cover-letter-btn { justify-content: center; }
-        .controls > a.portfolio-btn:first-of-type { display: none; }
-        .controls .download-btn > span { display: none; }
-        .controls #downloadBtn, .controls .cover-letter-btn { display: none; }
         .download-bar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 12px 0; display: flex; justify-content: center; }
         .current-download { background: var(--accent); border: 1px solid var(--accent); border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; }
         .current-download:hover { filter: brightness(0.94); }
@@ -724,11 +724,11 @@
             }
             .controls #themeToggle {
                 grid-area: theme;
-                position: static;
+                position: relative;
                 width: 40px;
                 min-width: 40px;
                 height: 40px;
-                overflow: visible;
+                overflow: hidden;
                 clip: auto;
                 clip-path: none;
                 padding: 10px;
@@ -875,28 +875,15 @@
 <body>
     <div class="resume-container">
         <div class="controls" role="tablist" aria-label="Document view">
-            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-label="Open Krishna's resume" aria-selected="true" aria-pressed="true" data-tooltip="Open Krishna's resume">
+            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-label="Open Krishna's resume" aria-selected="true" aria-pressed="true" data-tooltip="Resume">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
                 Resume
             </button>
-            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-label="Open Krishna's cover letter" aria-selected="false" aria-pressed="false" data-tooltip="Open Krishna's cover letter">
+            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-label="Open Krishna's cover letter" aria-selected="false" aria-pressed="false" data-tooltip="Cover letter">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6M8 16h8"/></svg>
                 Cover letter
             </button>
-            <button class="download-btn" id="downloadBtn" onclick="downloadPDF()">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-                <span>📥</span>
-                Download resume
-            </button>
-            <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn">
-                <span>🌐</span>
-                View Portfolio
-            </a>
-            <a href="./KRISHNA_TRIPATHI_COVER_LETTER.txt" class="cover-letter-btn" download="KRISHNA_TRIPATHI_COVER_LETTER.txt" aria-label="Download cover letter">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
-                Download letter
-            </a>
-            <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn" aria-label="Open Krishna's portfolio" data-tooltip="Open Krishna's portfolio">
+            <a href="https://krishna-tripathi.vercel.app/" target="_blank" rel="noopener noreferrer" class="portfolio-btn" aria-label="Open Krishna's portfolio" data-tooltip="Open Krishna's portfolio">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>
                 Portfolio
             </a>
@@ -1019,12 +1006,18 @@
             
             console.error = function(...args) {
                 const message = args.join(' ');
-                // Suppress Adobe feature flag errors and warnings
+                // Suppress Adobe feature flag errors and known browser policy noise
                 if (message.includes('No callback registered by viewer for GET_FEATURE_FLAG') ||
                     message.includes('setBlockPagesList') ||
                     message.includes('mobx.array') ||
                     message.includes('preload but not used') ||
-                    message.includes('rendering worker created')) {
+                    message.includes('rendering worker created') ||
+                    message.includes('Permissions-Policy') ||
+                    message.includes('attribution-reporting') ||
+                    message.includes('private-aggregation') ||
+                    message.includes('join-ad-interest-group') ||
+                    message.includes('run-ad-auction') ||
+                    message.includes('acrobatservices.adobe.com')) {
                     return;
                 }
                 originalError.apply(console, args);
@@ -1098,10 +1091,10 @@
                 // Get the current URL to determine the correct PDF URL
                 const currentURL = window.location.href;
                 const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
-                const pdfURL = baseURL + 'resume.pdf?v=20260925-1';
+                const pdfURL = baseURL + 'resume.pdf?v=20260928-1';
                 
-                                 // Your Adobe PDF Embed API client ID
-                 const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
+                // Your Adobe PDF Embed API client ID
+                const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
                 
                 const adobeDCView = new AdobeDC.View({
                     clientId: CLIENT_ID,
@@ -1112,43 +1105,64 @@
                 const isMobile = window.innerWidth <= 480;
                 
                 // Configure PDF with minimal UI - especially for mobile
-                adobeDCView.previewFile({
+                // Capture the promise so we can detect actual load success/failure
+                let previewPromise = adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
                 }, {
                     embedMode: isMobile ? "IN_LINE" : "FULL_WINDOW",
                     defaultViewMode: "FIT_WIDTH",
                     showAnnotationTools: false,
-                    showDownloadPDF: false, // Hide all Adobe download buttons
+                    showDownloadPDF: false,
                     showPrintPDF: false,
                     showLeftHandPanel: false,
-                    showPageControls: false, // Hide all page controls including expand
-                    showZoomControl: false, // Hide zoom controls
+                    showPageControls: false,
+                    showZoomControl: false,
                     focusOnRendering: false,
                     showThumbnails: false,
                     showBookmarks: false,
-                    showFullScreen: false, // Explicitly hide fullscreen/expand button
+                    showFullScreen: false,
                     enableFormFilling: false
                 });
-                
-                // Show PDF viewer
-                showPDFViewer();
-                
-                // Aggressively hide any remaining Adobe controls after load
-                setTimeout(() => {
-                    const hideButtons = [
+
+                // Failsafe: if Adobe gets stuck due to blocked ad-tracking connections,
+                // the promise may never resolve — fall back after 6 seconds
+                const stuckTimeout = setTimeout(() => {
+                    console.warn('Adobe SDK seems stuck (likely blocked by adblocker). Showing fallback.');
+                    showPDFFallback();
+                }, 6000);
+
+                // Some versions of View SDK don't return a promise, handle both safely
+                if (previewPromise && previewPromise.then) {
+                    previewPromise.then(() => {
+                        clearTimeout(stuckTimeout);
+                        showPDFViewer();
+                        setTimeout(hideAdobeControls, 1000);
+                    }).catch((err) => {
+                        clearTimeout(stuckTimeout);
+                        console.error('Adobe PDF preview failed:', err);
+                        showPDFFallback();
+                    });
+                } else {
+                    // No promise returned — assume immediate success
+                    clearTimeout(stuckTimeout);
+                    showPDFViewer();
+                    setTimeout(hideAdobeControls, 1000);
+                }
+
+                function hideAdobeControls() {
+                    const hideSelectors = [
                         '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
                         '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
                         'button[title*="full"]', 'button[title*="expand"]', 'button[title*="Full"]'
                     ];
-                    
-                    hideButtons.forEach(selector => {
-                        document.querySelectorAll(selector).forEach(el => {
+                    hideSelectors.forEach(sel => {
+                        document.querySelectorAll(sel).forEach(el => {
                             el.style.display = 'none';
                             el.style.visibility = 'hidden';
                         });
                     });
-                }, 1000);
+                }
                 
             } catch (error) {
                 showPDFFallback();
