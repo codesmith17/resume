@@ -563,29 +563,49 @@
                 padding: 10px 18px;
             }
         }
-        :root { color-scheme: light; --page-bg: #f8f9fa; --panel-bg: #ffffff; --text: #17202a; --muted: #5c6873; --line: #e1e8ed; --accent: #2563eb; --footer-bg: #1e293b; --footer-text: #f1f5f8; --footer-muted: #94a3b8; }
-        [data-theme="dark"] { color-scheme: dark; --page-bg: #11161c; --panel-bg: #1b232c; --text: #f1f5f8; --muted: #a9b5bf; --line: #34414d; --accent: #72b8ee; --footer-bg: #0f172a; --footer-text: #f1f5f8; --footer-muted: #94a3b8; }
+        :root { color-scheme: light; --page-bg: #f8f9fa; --panel-bg: #ffffff; --text: #17202a; --muted: #5c6873; --line: #e1e8ed; --accent: #2563eb; }
+        [data-theme="dark"] { color-scheme: dark; --page-bg: #11161c; --panel-bg: #1b232c; --text: #f1f5f8; --muted: #a9b5bf; --line: #34414d; --accent: #72b8ee; }
         body { background: var(--page-bg); color: var(--text); }
         .resume-container, .controls, .pdf-fallback { background: var(--panel-bg); border-color: var(--line); color: var(--text); }
         .controls { background: var(--panel-bg); }
         .pdf-container { background: var(--panel-bg); border-color: var(--line); }
         [data-theme="dark"] #adobe-dc-view { background: #11161c; }
-        .theme-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
-        .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .resume-footer { background: var(--footer-bg); color: var(--footer-text); border-top: none; }
-        .footer-info h3 { color: var(--footer-text); }
-        .footer-info p { color: var(--footer-muted); }
-        .footer-links a { color: var(--footer-text); background: rgba(255,255,255,0.08); }
-        .footer-links a:hover { background: rgba(255,255,255,0.16); }
+        .theme-btn, .cover-letter-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
+        .theme-btn:hover, .cover-letter-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .resume-footer { background: var(--panel-bg); border-top: 1px solid var(--line); color: var(--text); }
+        .footer-info h3, .footer-info p, .footer-links a { color: var(--text); }
         .controls { flex-wrap: wrap; }
         .controls button, .controls a { min-height: 42px; }
         .icon { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .theme-btn { width: 42px; padding: 10px; justify-content: center; position: relative; overflow: hidden; }
-        .theme-btn .icon { position: absolute; transition: transform 0.5s cubic-bezier(0.68,-0.55,0.26,1.55), opacity 0.45s ease; }
-        .theme-btn .sun-icon  { opacity: 0; transform: rotate(-90deg) scale(0.4); }
-        .theme-btn .moon-icon { opacity: 1; transform: rotate(0deg) scale(1); }
-        [data-theme="dark"] .theme-btn .moon-icon { opacity: 0; transform: rotate(90deg) scale(0.4); }
-        [data-theme="dark"] .theme-btn .sun-icon  { opacity: 1; transform: rotate(0deg) scale(1); }
+        .theme-btn .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transition:
+                transform 0.5s cubic-bezier(0.68,-0.55,0.26,1.55),
+                opacity 0.45s ease;
+        }
+
+        .theme-btn .sun-icon {
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(-90deg) scale(0.4);
+        }
+
+        .theme-btn .moon-icon {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+        }
+
+        [data-theme="dark"] .theme-btn .moon-icon {
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(90deg) scale(0.4);
+        }
+
+        [data-theme="dark"] .theme-btn .sun-icon {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+        }
         .view-toggle { background: transparent; border: 1px solid var(--line); color: var(--text); padding: 10px 16px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; }
         .view-toggle.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .view-toggle, .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] { position: relative; transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
@@ -603,6 +623,11 @@
         .letter-panel p { line-height: 1.75; margin: 0 0 18px; }
         .letter-signature { margin-top: 32px; }
         .content-hidden { display: none !important; }
+        .controls .download-btn, .controls .portfolio-btn, .controls .cover-letter-btn { border: 1px solid transparent; }
+        .controls .download-btn, .controls .portfolio-btn, .controls .cover-letter-btn { justify-content: center; }
+        .controls > a.portfolio-btn:first-of-type { display: none; }
+        .controls .download-btn > span { display: none; }
+        .controls #downloadBtn, .controls .cover-letter-btn { display: none; }
         .download-bar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 12px 0; display: flex; justify-content: center; }
         .current-download { background: var(--accent); border: 1px solid var(--accent); border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; }
         .current-download:hover { filter: brightness(0.94); }
@@ -695,8 +720,8 @@
                 }
 
                 @keyframes theme-reveal {
-                    from { clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%)); }
-                    to { clip-path: circle(150vmax at var(--theme-x, 50%) var(--theme-y, 50%)); }
+                    from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+                    to { clip-path: polygon(0 0, 200% 0, 0 200%, 0 100%); }
                 }
             }
         }
@@ -799,71 +824,29 @@
             }
         }
 
-        /* ── Floating Astronaut Illustration ────────────────────────────── */
-        .footer-illo {
+        .cute-illustration {
+            margin-top: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 18px;
-            animation: illo-float 3.6s ease-in-out infinite;
+            animation: float-illustration 3s ease-in-out infinite;
         }
 
-        .footer-illo svg {
-            width: 72px;
-            height: 72px;
-            overflow: visible;
-            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
-            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        .cute-illustration svg {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .footer-illo:hover svg {
-            transform: scale(1.12) rotate(-6deg);
+        .cute-illustration:hover svg {
+            transform: scale(1.15) rotate(5deg);
         }
 
-        /* orbit ring spins */
-        .illo-orbit {
-            transform-origin: 36px 36px;
-            animation: illo-orbit-spin 8s linear infinite;
+        @keyframes float-illustration {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
-
-        /* star on orbit pulses */
-        .illo-star {
-            animation: illo-star-pulse 2s ease-in-out infinite;
-        }
-
-        /* visor glint flickers */
-        .illo-glint {
-            animation: illo-glint-blink 4s ease-in-out infinite;
-        }
-
-        @keyframes illo-float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            40%       { transform: translateY(-9px) rotate(2deg); }
-            70%       { transform: translateY(-5px) rotate(-1deg); }
-        }
-
-        @keyframes illo-orbit-spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-
-        @keyframes illo-star-pulse {
-            0%, 100% { opacity: 1;   r: 3; }
-            50%       { opacity: 0.4; r: 2; }
-        }
-
-        @keyframes illo-glint-blink {
-            0%, 80%, 100% { opacity: 0.9; }
-            88%            { opacity: 0.1; }
-            92%            { opacity: 0.9; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .footer-illo, .illo-orbit, .illo-star, .illo-glint {
-                animation: none !important;
-            }
-        }
-        /* ─────────────────────────────────────────────────────────────────── */
     </style>
     <script>
         (() => {
@@ -875,15 +858,28 @@
 <body>
     <div class="resume-container">
         <div class="controls" role="tablist" aria-label="Document view">
-            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-label="Open Krishna's resume" aria-selected="true" aria-pressed="true" data-tooltip="Resume">
+            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-label="Open Krishna's resume" aria-selected="true" aria-pressed="true" data-tooltip="Open Krishna's resume">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
                 Resume
             </button>
-            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-label="Open Krishna's cover letter" aria-selected="false" aria-pressed="false" data-tooltip="Cover letter">
+            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-label="Open Krishna's cover letter" aria-selected="false" aria-pressed="false" data-tooltip="Open Krishna's cover letter">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6M8 16h8"/></svg>
                 Cover letter
             </button>
-            <a href="https://krishna-tripathi.vercel.app/" target="_blank" rel="noopener noreferrer" class="portfolio-btn" aria-label="Open Krishna's portfolio" data-tooltip="Open Krishna's portfolio">
+            <button class="download-btn" id="downloadBtn" onclick="downloadPDF()">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                <span>📥</span>
+                Download resume
+            </button>
+            <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn">
+                <span>🌐</span>
+                View Portfolio
+            </a>
+            <a href="./KRISHNA_TRIPATHI_COVER_LETTER.txt" class="cover-letter-btn" download="KRISHNA_TRIPATHI_COVER_LETTER.txt" aria-label="Download cover letter">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
+                Download letter
+            </a>
+            <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn" aria-label="Open Krishna's portfolio" data-tooltip="Open Krishna's portfolio">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>
                 Portfolio
             </a>
@@ -951,50 +947,15 @@
                 <h3>Krishna Tripathi</h3>
                 <p>Software Engineer • Available for opportunities</p>
                 <p>Let's connect and discuss exciting opportunities</p>
-                <!-- Floating astronaut — no text, vibes only ✨ -->
-                <div class="footer-illo" title="Open to new adventures 🚀">
-                    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floating astronaut">
-                        <!-- Orbit ring + star -->
-                        <g class="illo-orbit">
-                            <ellipse cx="36" cy="36" rx="30" ry="10"
-                                fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"
-                                stroke-dasharray="4 3"/>
-                            <circle class="illo-star" cx="66" cy="36" r="3" fill="#facc15"/>
-                        </g>
-                        <!-- Body / suit -->
-                        <rect x="24" y="40" width="24" height="20" rx="10"
-                            fill="#94a3b8"/>
-                        <!-- Backpack / life-support -->
-                        <rect x="18" y="43" width="8" height="12" rx="4"
-                            fill="#64748b"/>
-                        <!-- Helmet -->
-                        <circle cx="36" cy="34" r="16" fill="#cbd5e1"/>
-                        <!-- Visor -->
-                        <ellipse cx="36" cy="35" rx="10" ry="9" fill="#1e293b" opacity="0.88"/>
-                        <!-- Visor glint -->
-                        <ellipse class="illo-glint" cx="31" cy="30" rx="3" ry="2"
-                            fill="white" opacity="0.6" transform="rotate(-20 31 30)"/>
-                        <!-- Left arm floating out -->
-                        <path d="M24 46 Q14 40 12 34" stroke="#94a3b8" stroke-width="6"
-                            stroke-linecap="round" fill="none"/>
-                        <circle cx="12" cy="33" r="4" fill="#64748b"/>
-                        <!-- Right arm floating out -->
-                        <path d="M48 46 Q58 40 60 34" stroke="#94a3b8" stroke-width="6"
-                            stroke-linecap="round" fill="none"/>
-                        <circle cx="60" cy="33" r="4" fill="#64748b"/>
-                        <!-- Legs -->
-                        <path d="M30 60 Q28 68 24 70" stroke="#94a3b8" stroke-width="5"
-                            stroke-linecap="round" fill="none"/>
-                        <path d="M42 60 Q44 68 48 70" stroke="#94a3b8" stroke-width="5"
-                            stroke-linecap="round" fill="none"/>
-                        <!-- Boot tips -->
-                        <ellipse cx="23" cy="70" rx="4" ry="2.5" fill="#64748b"/>
-                        <ellipse cx="49" cy="70" rx="4" ry="2.5" fill="#64748b"/>
-                        <!-- Tiny stars in background -->
-                        <circle cx="8"  cy="14" r="1.2" fill="rgba(255,255,255,0.5)"/>
-                        <circle cx="62" cy="12" r="1"   fill="rgba(255,255,255,0.45)"/>
-                        <circle cx="18" cy="62" r="1"   fill="rgba(255,255,255,0.4)"/>
-                        <circle cx="56" cy="58" r="1.4" fill="rgba(255,255,255,0.5)"/>
+                <div class="cute-illustration" title="Hire me!">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 40H75C80.5228 40 85 44.4772 85 50V75C85 80.5228 80.5228 85 75 85H25C19.4772 85 15 80.5228 15 75V50C15 44.4772 19.4772 40 25 40Z" fill="#FACC15" stroke="#EAB308" stroke-width="4"/>
+                        <path d="M35 40V30C35 24.4772 39.4772 20 45 20H55C60.5228 20 65 24.4772 65 30V40" stroke="#FACC15" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="35" cy="55" r="5" fill="#334155"/>
+                        <circle cx="65" cy="55" r="5" fill="#334155"/>
+                        <path d="M45 65C45 65 48 70 50 70C52 70 55 65 55 65" stroke="#334155" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="25" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
+                        <circle cx="75" cy="62" r="4" fill="#F472B6" opacity="0.8"/>
                     </svg>
                 </div>
             </div>
@@ -1029,18 +990,12 @@
             
             console.error = function(...args) {
                 const message = args.join(' ');
-                // Suppress Adobe feature flag errors and known browser policy noise
+                // Suppress Adobe feature flag errors and warnings
                 if (message.includes('No callback registered by viewer for GET_FEATURE_FLAG') ||
                     message.includes('setBlockPagesList') ||
                     message.includes('mobx.array') ||
                     message.includes('preload but not used') ||
-                    message.includes('rendering worker created') ||
-                    message.includes('Permissions-Policy') ||
-                    message.includes('attribution-reporting') ||
-                    message.includes('private-aggregation') ||
-                    message.includes('join-ad-interest-group') ||
-                    message.includes('run-ad-auction') ||
-                    message.includes('acrobatservices.adobe.com')) {
+                    message.includes('rendering worker created')) {
                     return;
                 }
                 originalError.apply(console, args);
@@ -1114,47 +1069,20 @@
                 // Get the current URL to determine the correct PDF URL
                 const currentURL = window.location.href;
                 const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
-                const pdfURL = baseURL + 'resume.pdf?v=20260928-1';
+                const pdfURL = baseURL + 'resume.pdf?v=20260925-1';
                 
-                // Adobe PDF Embed API client ID
-                const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
+                                 // Your Adobe PDF Embed API client ID
+                 const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
                 
                 const adobeDCView = new AdobeDC.View({
                     clientId: CLIENT_ID,
                     divId: "adobe-dc-view"
                 });
-
-                // ── Layer 1: Official event API (most reliable) ───────────
-                // Detects PREVIEW_RENDERING_FAILED immediately when Adobe
-                // can't reach its servers (e.g. blocked by an adblocker)
-                let resolvedViaEvent = false;
-                try {
-                    adobeDCView.registerCallback(
-                        AdobeDC.View.Enum.CallbackType.EVENT_LISTENER,
-                        function(event) {
-                            if (resolvedViaEvent) return;
-                            if (event.type === 'PREVIEW_RENDERING_FAILED' ||
-                                event.type === 'APP_RENDERING_FAILED') {
-                                resolvedViaEvent = true;
-                                clearTimeout(stuckTimeout);
-                                showPDFFallback();
-                            } else if (event.type === 'APP_RENDERING_DONE' ||
-                                       event.type === 'PREVIEW_RENDERING_DONE') {
-                                resolvedViaEvent = true;
-                                clearTimeout(stuckTimeout);
-                                showPDFViewer();
-                                setTimeout(hideAdobeControls, 800);
-                            }
-                        },
-                        { enablePDFAnalytics: false }
-                    );
-                } catch(e) { /* registerCallback not supported — fall through to promise */ }
-
+                
                 // Detect mobile device for optimized viewing
                 const isMobile = window.innerWidth <= 480;
                 
-                // Configure PDF with minimal UI
-                // ── Layer 2: Capture promise for .then()/.catch() ─────────
+                // Configure PDF with minimal UI - especially for mobile
                 let previewPromise = adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
@@ -1162,56 +1090,50 @@
                     embedMode: isMobile ? "IN_LINE" : "FULL_WINDOW",
                     defaultViewMode: "FIT_WIDTH",
                     showAnnotationTools: false,
-                    showDownloadPDF: false,
+                    showDownloadPDF: false, // Hide all Adobe download buttons
                     showPrintPDF: false,
                     showLeftHandPanel: false,
-                    showPageControls: false,
-                    showZoomControl: false,
+                    showPageControls: false, // Hide all page controls including expand
+                    showZoomControl: false, // Hide zoom controls
                     focusOnRendering: false,
                     showThumbnails: false,
                     showBookmarks: false,
-                    showFullScreen: false,
+                    showFullScreen: false, // Explicitly hide fullscreen/expand button
                     enableFormFilling: false
                 });
 
-                // ── Layer 3: Stuck timeout — last resort ──────────────────
-                // If Adobe's promise never resolves (e.g. network killed by
-                // adblocker mid-load), fall back after 7 seconds
+                // Failsafe: if Adobe gets completely stuck due to blocked connections
                 const stuckTimeout = setTimeout(() => {
-                    if (!resolvedViaEvent) {
-                        console.warn('Adobe PDF Embed: stuck timeout reached. Showing fallback.');
-                        showPDFFallback();
-                    }
-                }, 7000);
+                    console.warn('Adobe SDK seems stuck. Showing fallback.');
+                    showPDFFallback();
+                }, 6000);
 
+                // Some versions of View SDK don't return a promise, so we handle both safely
                 if (previewPromise && previewPromise.then) {
                     previewPromise.then(() => {
-                        if (!resolvedViaEvent) {
-                            clearTimeout(stuckTimeout);
-                            showPDFViewer();
-                            setTimeout(hideAdobeControls, 800);
-                        }
-                    }).catch((err) => {
-                        if (!resolvedViaEvent) {
-                            clearTimeout(stuckTimeout);
-                            showPDFFallback();
-                        }
-                    });
-                } else {
-                    // No promise — assume success if event API didn't already fire
-                    if (!resolvedViaEvent) {
                         clearTimeout(stuckTimeout);
                         showPDFViewer();
-                        setTimeout(hideAdobeControls, 800);
-                    }
+                        setTimeout(hideAdobeControls, 1000);
+                    }).catch((err) => {
+                        clearTimeout(stuckTimeout);
+                        console.error('Adobe PDF failed to preview (Promise rejected):', err);
+                        showPDFFallback();
+                    });
+                } else {
+                    clearTimeout(stuckTimeout);
+                    showPDFViewer();
+                    setTimeout(hideAdobeControls, 1000);
                 }
 
                 function hideAdobeControls() {
-                    ['.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
-                     '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
-                     'button[title*="full"]', 'button[title*="Full"]', 'button[title*="expand"]'
-                    ].forEach(sel => {
-                        document.querySelectorAll(sel).forEach(el => {
+                    const hideButtons = [
+                        '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
+                        '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
+                        'button[title*="full"]', 'button[title*="expand"]', 'button[title*="Full"]'
+                    ];
+                    
+                    hideButtons.forEach(selector => {
+                        document.querySelectorAll(selector).forEach(el => {
                             el.style.display = 'none';
                             el.style.visibility = 'hidden';
                         });
@@ -1309,5 +1231,6 @@
             }
         });
     </script>
+
 </body>
 </html>
