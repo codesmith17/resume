@@ -805,17 +805,17 @@
             gap: 8px;
             margin-top: 15px;
             padding: 8px 16px;
-            background: color-mix(in srgb, var(--text) 5%, transparent);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             font-size: 14px;
-            color: var(--text);
+            color: #e2e8f0;
             backdrop-filter: blur(4px);
-            border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
 
         .visitor-count:hover {
-            background: color-mix(in srgb, var(--text) 10%, transparent);
+            background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
         }
 
@@ -1187,17 +1187,33 @@
 
     <!-- GoatCounter Analytics & Public Views -->
     <script>
+        console.log("[GoatCounter Debug] Starting interval to check for window.goatcounter...");
+        var attempts = 0;
         var t = setInterval(function() {
+            attempts++;
+            console.log("[GoatCounter Debug] Attempt " + attempts + ": checking window.goatcounter:", !!window.goatcounter, window.goatcounter);
             if (window.goatcounter && window.goatcounter.visit_count) {
+                console.log("[GoatCounter Debug] visit_count function found. Appending views to #stats.");
                 clearInterval(t);
-                window.goatcounter.visit_count({
-                    append: '#stats',
-                    type: 'html',
-                    no_branding: true
-                });
+                try {
+                    window.goatcounter.visit_count({
+                        append: '#stats',
+                        type: 'html',
+                        no_branding: true
+                    });
+                    console.log("[GoatCounter Debug] visit_count executed successfully.");
+                } catch(e) {
+                    console.error("[GoatCounter Debug] Error executing visit_count:", e);
+                }
+            } else if (attempts > 50) {
+                // After 5 seconds
+                console.warn("[GoatCounter Debug] GoatCounter failed to load after 5 seconds. Usually means it's blocked by an adblocker (ERR_BLOCKED_BY_CLIENT).");
+                clearInterval(t);
+                var statsEl = document.getElementById('stats');
+                if (statsEl) statsEl.innerText = "Unavailable (Blocked)";
             }
         }, 100);
     </script>
-    <script data-goatcounter="https://codesmith17.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://codesmith17.goatcounter.com/count" async src="//gc.zgo.at/count.js" onload="console.log('[GoatCounter Debug] count.js loaded!')" onerror="console.error('[GoatCounter Debug] count.js failed to load. Adblocker?')"></script>
 </body>
 </html>
