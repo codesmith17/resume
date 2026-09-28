@@ -805,17 +805,17 @@
             gap: 8px;
             margin-top: 15px;
             padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
+            background: color-mix(in srgb, var(--text) 5%, transparent);
             border-radius: 20px;
             font-size: 14px;
-            color: #e2e8f0;
+            color: var(--text);
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
             transition: all 0.3s ease;
         }
 
         .visitor-count:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: color-mix(in srgb, var(--text) 10%, transparent);
             transform: translateY(-2px);
         }
 
