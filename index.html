@@ -799,69 +799,69 @@
             }
         }
 
-        /* ── Hire-Me Cartoon Animations ─────────────────────────────────── */
-        .hire-me-cartoon {
+        /* ── Floating Astronaut Illustration ────────────────────────────── */
+        .footer-illo {
             display: flex;
             justify-content: center;
-            margin-top: 16px;
+            align-items: center;
+            margin-top: 18px;
+            animation: illo-float 3.6s ease-in-out infinite;
         }
 
-        .hire-me-cartoon svg {
-            width: 160px;
-            height: 96px;
+        .footer-illo svg {
+            width: 72px;
+            height: 72px;
             overflow: visible;
-            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
         }
 
-        /* Sign: gentle left-right sway */
-        .hire-me-cartoon .animated-sign {
-            transform-origin: 100px 70px;
-            animation: sign-sway 2.4s ease-in-out infinite;
+        .footer-illo:hover svg {
+            transform: scale(1.12) rotate(-6deg);
         }
 
-        /* Character: smooth float up-down */
-        .hire-me-cartoon .character {
-            animation: char-float 2.8s ease-in-out infinite;
+        /* orbit ring spins */
+        .illo-orbit {
+            transform-origin: 36px 36px;
+            animation: illo-orbit-spin 8s linear infinite;
         }
 
-        /* Eye blink */
-        .hire-me-cartoon .eye-blink {
-            animation: eye-blink 3.5s ease-in-out infinite;
+        /* star on orbit pulses */
+        .illo-star {
+            animation: illo-star-pulse 2s ease-in-out infinite;
         }
 
-        /* Antenna dot pulse */
-        .hire-me-cartoon .antenna-dot {
-            animation: antenna-pulse 1.8s ease-in-out infinite;
+        /* visor glint flickers */
+        .illo-glint {
+            animation: illo-glint-blink 4s ease-in-out infinite;
         }
 
-        @keyframes sign-sway {
-            0%,  100% { transform: rotate(-8deg); }
-            25%        { transform: rotate(0deg); }
-            50%        { transform: rotate(8deg); }
-            75%        { transform: rotate(0deg); }
+        @keyframes illo-float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            40%       { transform: translateY(-9px) rotate(2deg); }
+            70%       { transform: translateY(-5px) rotate(-1deg); }
         }
 
-        @keyframes char-float {
-            0%,  100% { transform: translateY(0); }
-            50%        { transform: translateY(-6px); }
+        @keyframes illo-orbit-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
 
-        @keyframes eye-blink {
-            0%, 90%, 100% { transform: scaleY(1); }
-            95%            { transform: scaleY(0.1); }
+        @keyframes illo-star-pulse {
+            0%, 100% { opacity: 1;   r: 3; }
+            50%       { opacity: 0.4; r: 2; }
         }
 
-        @keyframes antenna-pulse {
-            0%,  100% { opacity: 1;    transform: scale(1); }
-            50%        { opacity: 0.55; transform: scale(1.6); }
+        @keyframes illo-glint-blink {
+            0%, 80%, 100% { opacity: 0.9; }
+            88%            { opacity: 0.1; }
+            92%            { opacity: 0.9; }
         }
 
-        /* Hover: speed everything up for a frantic wave */
-        .hire-me-cartoon:hover .animated-sign {
-            animation-duration: 0.9s;
-        }
-        .hire-me-cartoon:hover .character {
-            animation-duration: 1s;
+        @media (prefers-reduced-motion: reduce) {
+            .footer-illo, .illo-orbit, .illo-star, .illo-glint {
+                animation: none !important;
+            }
         }
         /* ─────────────────────────────────────────────────────────────────── */
     </style>
@@ -951,27 +951,50 @@
                 <h3>Krishna Tripathi</h3>
                 <p>Software Engineer • Available for opportunities</p>
                 <p>Let's connect and discuss exciting opportunities</p>
-                <div class="hire-me-cartoon" title="Looking for opportunities!">
-                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Sign that waves -->
-                        <g class="animated-sign">
-                            <rect x="50" y="10" width="100" height="40" rx="6" fill="var(--accent)" stroke="var(--text)" stroke-width="3"/>
-                            <text x="100" y="36" font-family="sans-serif" font-weight="900" font-size="18" fill="var(--panel-bg)" text-anchor="middle" letter-spacing="1">HIRE ME!</text>
-                            <line x1="100" y1="50" x2="100" y2="70" stroke="var(--text)" stroke-width="4" stroke-linecap="round"/>
+                <!-- Floating astronaut — no text, vibes only ✨ -->
+                <div class="footer-illo" title="Open to new adventures 🚀">
+                    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floating astronaut">
+                        <!-- Orbit ring + star -->
+                        <g class="illo-orbit">
+                            <ellipse cx="36" cy="36" rx="30" ry="10"
+                                fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"
+                                stroke-dasharray="4 3"/>
+                            <circle class="illo-star" cx="66" cy="36" r="3" fill="#facc15"/>
                         </g>
-                        <!-- Character/Robot -->
-                        <g class="character">
-                            <rect x="80" y="90" width="40" height="30" rx="8" fill="var(--muted)"/>
-                            <circle cx="100" cy="75" r="18" fill="var(--text)"/>
-                            <!-- Eyes -->
-                            <circle class="eye-blink" cx="93" cy="72" r="3" fill="var(--panel-bg)" style="transform-origin: 93px 72px;"/>
-                            <circle class="eye-blink" cx="107" cy="72" r="3" fill="var(--panel-bg)" style="transform-origin: 107px 72px;"/>
-                            <!-- Smile -->
-                            <path d="M94 80 Q 100 86 106 80" stroke="var(--panel-bg)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                            <!-- Antenna -->
-                            <line x1="100" y1="57" x2="100" y2="45" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/>
-                            <circle class="antenna-dot" cx="100" cy="43" r="4" fill="var(--accent)" style="transform-origin: 100px 43px;"/>
-                        </g>
+                        <!-- Body / suit -->
+                        <rect x="24" y="40" width="24" height="20" rx="10"
+                            fill="#94a3b8"/>
+                        <!-- Backpack / life-support -->
+                        <rect x="18" y="43" width="8" height="12" rx="4"
+                            fill="#64748b"/>
+                        <!-- Helmet -->
+                        <circle cx="36" cy="34" r="16" fill="#cbd5e1"/>
+                        <!-- Visor -->
+                        <ellipse cx="36" cy="35" rx="10" ry="9" fill="#1e293b" opacity="0.88"/>
+                        <!-- Visor glint -->
+                        <ellipse class="illo-glint" cx="31" cy="30" rx="3" ry="2"
+                            fill="white" opacity="0.6" transform="rotate(-20 31 30)"/>
+                        <!-- Left arm floating out -->
+                        <path d="M24 46 Q14 40 12 34" stroke="#94a3b8" stroke-width="6"
+                            stroke-linecap="round" fill="none"/>
+                        <circle cx="12" cy="33" r="4" fill="#64748b"/>
+                        <!-- Right arm floating out -->
+                        <path d="M48 46 Q58 40 60 34" stroke="#94a3b8" stroke-width="6"
+                            stroke-linecap="round" fill="none"/>
+                        <circle cx="60" cy="33" r="4" fill="#64748b"/>
+                        <!-- Legs -->
+                        <path d="M30 60 Q28 68 24 70" stroke="#94a3b8" stroke-width="5"
+                            stroke-linecap="round" fill="none"/>
+                        <path d="M42 60 Q44 68 48 70" stroke="#94a3b8" stroke-width="5"
+                            stroke-linecap="round" fill="none"/>
+                        <!-- Boot tips -->
+                        <ellipse cx="23" cy="70" rx="4" ry="2.5" fill="#64748b"/>
+                        <ellipse cx="49" cy="70" rx="4" ry="2.5" fill="#64748b"/>
+                        <!-- Tiny stars in background -->
+                        <circle cx="8"  cy="14" r="1.2" fill="rgba(255,255,255,0.5)"/>
+                        <circle cx="62" cy="12" r="1"   fill="rgba(255,255,255,0.45)"/>
+                        <circle cx="18" cy="62" r="1"   fill="rgba(255,255,255,0.4)"/>
+                        <circle cx="56" cy="58" r="1.4" fill="rgba(255,255,255,0.5)"/>
                     </svg>
                 </div>
             </div>
@@ -1093,19 +1116,45 @@
                 const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
                 const pdfURL = baseURL + 'resume.pdf?v=20260928-1';
                 
-                // Your Adobe PDF Embed API client ID
+                // Adobe PDF Embed API client ID
                 const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
                 
                 const adobeDCView = new AdobeDC.View({
                     clientId: CLIENT_ID,
                     divId: "adobe-dc-view"
                 });
-                
+
+                // ── Layer 1: Official event API (most reliable) ───────────
+                // Detects PREVIEW_RENDERING_FAILED immediately when Adobe
+                // can't reach its servers (e.g. blocked by an adblocker)
+                let resolvedViaEvent = false;
+                try {
+                    adobeDCView.registerCallback(
+                        AdobeDC.View.Enum.CallbackType.EVENT_LISTENER,
+                        function(event) {
+                            if (resolvedViaEvent) return;
+                            if (event.type === 'PREVIEW_RENDERING_FAILED' ||
+                                event.type === 'APP_RENDERING_FAILED') {
+                                resolvedViaEvent = true;
+                                clearTimeout(stuckTimeout);
+                                showPDFFallback();
+                            } else if (event.type === 'APP_RENDERING_DONE' ||
+                                       event.type === 'PREVIEW_RENDERING_DONE') {
+                                resolvedViaEvent = true;
+                                clearTimeout(stuckTimeout);
+                                showPDFViewer();
+                                setTimeout(hideAdobeControls, 800);
+                            }
+                        },
+                        { enablePDFAnalytics: false }
+                    );
+                } catch(e) { /* registerCallback not supported — fall through to promise */ }
+
                 // Detect mobile device for optimized viewing
                 const isMobile = window.innerWidth <= 480;
                 
-                // Configure PDF with minimal UI - especially for mobile
-                // Capture the promise so we can detect actual load success/failure
+                // Configure PDF with minimal UI
+                // ── Layer 2: Capture promise for .then()/.catch() ─────────
                 let previewPromise = adobeDCView.previewFile({
                     content: { location: { url: pdfURL } },
                     metaData: { fileName: "KRISHNA_TRIPATHI_RESUME.pdf" }
@@ -1125,38 +1174,43 @@
                     enableFormFilling: false
                 });
 
-                // Failsafe: if Adobe gets stuck due to blocked ad-tracking connections,
-                // the promise may never resolve — fall back after 6 seconds
+                // ── Layer 3: Stuck timeout — last resort ──────────────────
+                // If Adobe's promise never resolves (e.g. network killed by
+                // adblocker mid-load), fall back after 7 seconds
                 const stuckTimeout = setTimeout(() => {
-                    console.warn('Adobe SDK seems stuck (likely blocked by adblocker). Showing fallback.');
-                    showPDFFallback();
-                }, 6000);
+                    if (!resolvedViaEvent) {
+                        console.warn('Adobe PDF Embed: stuck timeout reached. Showing fallback.');
+                        showPDFFallback();
+                    }
+                }, 7000);
 
-                // Some versions of View SDK don't return a promise, handle both safely
                 if (previewPromise && previewPromise.then) {
                     previewPromise.then(() => {
-                        clearTimeout(stuckTimeout);
-                        showPDFViewer();
-                        setTimeout(hideAdobeControls, 1000);
+                        if (!resolvedViaEvent) {
+                            clearTimeout(stuckTimeout);
+                            showPDFViewer();
+                            setTimeout(hideAdobeControls, 800);
+                        }
                     }).catch((err) => {
-                        clearTimeout(stuckTimeout);
-                        console.error('Adobe PDF preview failed:', err);
-                        showPDFFallback();
+                        if (!resolvedViaEvent) {
+                            clearTimeout(stuckTimeout);
+                            showPDFFallback();
+                        }
                     });
                 } else {
-                    // No promise returned — assume immediate success
-                    clearTimeout(stuckTimeout);
-                    showPDFViewer();
-                    setTimeout(hideAdobeControls, 1000);
+                    // No promise — assume success if event API didn't already fire
+                    if (!resolvedViaEvent) {
+                        clearTimeout(stuckTimeout);
+                        showPDFViewer();
+                        setTimeout(hideAdobeControls, 800);
+                    }
                 }
 
                 function hideAdobeControls() {
-                    const hideSelectors = [
-                        '.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
-                        '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
-                        'button[title*="full"]', 'button[title*="expand"]', 'button[title*="Full"]'
-                    ];
-                    hideSelectors.forEach(sel => {
+                    ['.dc-fullscreen-btn', '.dc-expand-btn', '.fullscreen-button', '.expand-button',
+                     '[data-testid="fullscreen-button"]', '[data-testid="expand-button"]',
+                     'button[title*="full"]', 'button[title*="Full"]', 'button[title*="expand"]'
+                    ].forEach(sel => {
                         document.querySelectorAll(sel).forEach(el => {
                             el.style.display = 'none';
                             el.style.visibility = 'hidden';
