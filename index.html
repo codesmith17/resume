@@ -609,10 +609,10 @@
         @media (max-width: 620px) {
             .controls {
                 display: grid;
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
                 grid-template-areas:
-                    "resume letter theme"
-                    "portfolio portfolio portfolio";
+                    "resume letter"
+                    "portfolio portfolio";
                 gap: 8px;
                 align-items: stretch;
                 justify-content: initial;
@@ -628,19 +628,27 @@
                 box-sizing: border-box;
             }
             .controls #themeToggle {
-                grid-area: theme;
-                width: 42px;
-                min-width: 42px;
-                padding: 10px;
+                grid-area: auto;
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                clip-path: inset(50%);
+                white-space: nowrap;
             }
 
             .controls .view-toggle,
             .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
                 min-width: 0;
                 padding: 10px 7px;
-                font-size: 13px;
+                font-size: 12px;
                 gap: 5px;
                 white-space: nowrap;
+            }
+
+            .controls .view-toggle {
+                width: 100%;
             }
 
             .controls .view-toggle .icon,
@@ -672,11 +680,11 @@
 <body>
     <div class="resume-container">
         <div class="controls" role="tablist" aria-label="Document view">
-            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-selected="true" aria-pressed="true" data-tooltip="Open Krishna's resume">
+            <button class="view-toggle is-active" id="resumeToggle" type="button" role="tab" aria-label="Open Krishna's resume" aria-selected="true" aria-pressed="true" data-tooltip="Open Krishna's resume">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
-                Open Krishna's resume
+                Resume
             </button>
-            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-selected="false" aria-pressed="false" data-tooltip="View your cover letter">
+            <button class="view-toggle" id="letterToggle" type="button" role="tab" aria-label="Open Krishna's cover letter" aria-selected="false" aria-pressed="false" data-tooltip="Open Krishna's cover letter">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6M8 16h8"/></svg>
                 Cover letter
             </button>
@@ -695,7 +703,7 @@
             </a>
             <a href="https://krishna-tripathi.vercel.app/" target="_blank" class="portfolio-btn" aria-label="Open Krishna's portfolio" data-tooltip="Open Krishna's portfolio">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>
-                Open Krishna's portfolio
+                Portfolio
             </a>
             <button class="theme-btn" id="themeToggle" type="button" aria-label="Switch to dark mode">
                 <svg class="icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"/></svg>
