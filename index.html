@@ -875,7 +875,7 @@
                 <span>🌐</span>
                 View Portfolio
             </a>
-            <a href="./KRISHNA_TRIPATHI_COVER_LETTER.txt" class="cover-letter-btn" download="KRISHNA_TRIPATHI_COVER_LETTER.txt" aria-label="Download cover letter">
+            <a href="#" class="cover-letter-btn" id="coverLetterDownloadBtn" aria-label="Download cover letter">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
                 Download letter
             </a>
@@ -930,7 +930,7 @@
                 <h1>Krishna Tripathi</h1>
                 <div class="letter-contact">Software Engineer · <a href="mailto:kanchanlatakrishna@gmail.com">kanchanlatakrishna@gmail.com</a> · <a href="https://krishna-tripathi.vercel.app/" target="_blank" rel="noopener noreferrer">krishna-tripathi.vercel.app</a></div>
             </header>
-            <div class="letter-date">September 25, 2026</div>
+            <div class="letter-date" id="letterDate">September 25, 2026</div>
             <p>Dear Hiring Manager,</p>
             <p>I am writing to express my interest in software engineering opportunities where I can build reliable products across backend systems, developer tooling, and thoughtful user experiences.</p>
             <p>In my current work at Yugabyte, I build distributed systems and AI-focused capabilities using Go, Java, React, Python, and YugabyteDB. I have delivered authentication flows across multiple identity providers, contributed integrations to LangChain4j, and built internal tooling that helps engineering teams diagnose failures and move faster.</p>
@@ -1189,7 +1189,62 @@
         const resumeToggle = document.getElementById('resumeToggle');
         const letterToggle = document.getElementById('letterToggle');
         const letterPanel = document.getElementById('letterPanel');
+        const letterDateEl = document.getElementById('letterDate');
         let currentView = 'resume';
+
+        // Set today's date on the cover letter (display + download timestamp)
+        function formatDate(date) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        }
+        const today = new Date();
+        const todayFormatted = formatDate(today);
+        letterDateEl.textContent = todayFormatted;
+
+        // Build the cover letter text with today's date as the download timestamp
+        function buildCoverLetter() {
+            return `Krishna Tripathi
+Software Engineer
+kanchanlatakrishna@gmail.com · krishna-tripathi.vercel.app
+
+${todayFormatted}
+
+Dear Hiring Manager,
+
+I am writing to express my interest in software engineering opportunities where I can build reliable products across backend systems, developer tooling, and thoughtful user experiences.
+
+In my current work at Yugabyte, I build distributed systems and AI-focused capabilities using Go, Java, React, Python, and YugabyteDB. I have delivered authentication flows across multiple identity providers, contributed integrations to LangChain4j, and built internal tooling that helps engineering teams diagnose failures and move faster.
+
+I enjoy working across the stack, from designing APIs and data flows to shaping the interface that makes a product understandable. I bring a practical, ownership-oriented approach to ambiguous problems and care deeply about maintainable code, clear communication, and useful outcomes.
+
+I would welcome the opportunity to discuss how my experience could support your team. Thank you for your time and consideration.
+
+Sincerely,
+Krishna Tripathi`;
+        }
+
+        // Download cover letter with today's date embedded in filename + content
+        function downloadCoverLetter() {
+            const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+            const blob = new Blob([buildCoverLetter()], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `KRISHNA_TRIPATHI_COVER_LETTER_${datePart}.txt`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        const coverLetterDownloadBtn = document.getElementById('coverLetterDownloadBtn');
+        if (coverLetterDownloadBtn) {
+            coverLetterDownloadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                downloadCoverLetter();
+            });
+        }
         const resumeContent = [document.getElementById('loading'), document.getElementById('pdfContainer'), document.getElementById('pdfFallback'), document.getElementById('errorMessage')];
         function showResume() {
             currentView = 'resume';
@@ -1219,13 +1274,7 @@
         letterToggle.addEventListener('click', showLetter);
         document.getElementById('currentDownload').addEventListener('click', () => {
             if (currentView === 'cover-letter') {
-                const link = document.createElement('a');
-                link.href = './KRISHNA_TRIPATHI_COVER_LETTER.txt';
-                link.download = 'KRISHNA_TRIPATHI_COVER_LETTER.txt';
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                downloadCoverLetter();
             } else {
                 downloadPDF();
             }
