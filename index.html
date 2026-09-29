@@ -932,11 +932,12 @@
             </header>
             <div class="letter-date" id="letterDate">September 25, 2026</div>
             <p>Dear Hiring Manager,</p>
-            <p>I am writing to express my interest in software engineering opportunities where I can build reliable products across backend systems, developer tooling, and thoughtful user experiences.</p>
-            <p>In my current work at Yugabyte, I build distributed systems and AI-focused capabilities using Go, Java, React, Python, and YugabyteDB. I have delivered authentication flows across multiple identity providers, contributed integrations to LangChain4j, and built internal tooling that helps engineering teams diagnose failures and move faster.</p>
-            <p>I enjoy working across the stack, from designing APIs and data flows to shaping the interface that makes a product understandable. I bring a practical, ownership-oriented approach to ambiguous problems and care deeply about maintainable code, clear communication, and useful outcomes.</p>
-            <p>I would welcome the opportunity to discuss how my experience could support your team. Thank you for your time and consideration.</p>
-            <p class="letter-signature">Sincerely,<br><strong>Krishna Tripathi</strong></p>
+            <p>I am excited to apply for the Software Engineer position. I have hands-on experience building production systems across distributed databases, backend services, AI/LLM infrastructure, developer tooling, and full-stack applications.</p>
+            <p>At Yugabyte, I have contributed extensively to Meko, an AI agentic-memory and knowledge-base platform, working across Go, Python, React, AWS Cognito, S3, MCP, and Langfuse. I built the end-to-end knowledge-base upload pipeline using presigned S3 POSTs with storage-level validation, designed federated authentication with Google, LinkedIn, and GitHub, and developed conversation decision-tracing to provide accurate per-step retrieval observability. I also contributed to the Meko MCP server, making knowledge-base operations more reliable for AI agents.</p>
+            <p>Beyond Meko, I have made contributions to YugabyteDB and open-source projects, including LangChain4j, where my YugabyteDB embedding-store integration and PgDistRagRetriever were merged upstream. I have also worked on database migration tooling, smart drivers, CI infrastructure, observability, and internal analytics systems.</p>
+            <p>These experiences have given me a strong foundation in backend engineering, distributed systems, databases, cloud infrastructure, and AI-powered applications, while also teaching me to work effectively in large production codebases and open-source projects.</p>
+            <p>I would welcome the opportunity to bring this experience to your engineering team and contribute to building reliable, scalable software.</p>
+            <p class="letter-signature">Best regards,<br><strong>Krishna Tripathi</strong><br>GitHub: github.com/krishna-yb</p>
         </article>
     </div>
 
@@ -1211,26 +1212,28 @@ ${todayFormatted}
 
 Dear Hiring Manager,
 
-I am writing to express my interest in software engineering opportunities where I can build reliable products across backend systems, developer tooling, and thoughtful user experiences.
+I am excited to apply for the Software Engineer position. I have hands-on experience building production systems across distributed databases, backend services, AI/LLM infrastructure, developer tooling, and full-stack applications.
 
-In my current work at Yugabyte, I build distributed systems and AI-focused capabilities using Go, Java, React, Python, and YugabyteDB. I have delivered authentication flows across multiple identity providers, contributed integrations to LangChain4j, and built internal tooling that helps engineering teams diagnose failures and move faster.
+At Yugabyte, I have contributed extensively to Meko, an AI agentic-memory and knowledge-base platform, working across Go, Python, React, AWS Cognito, S3, MCP, and Langfuse. I built the end-to-end knowledge-base upload pipeline using presigned S3 POSTs with storage-level validation, designed federated authentication with Google, LinkedIn, and GitHub, and developed conversation decision-tracing to provide accurate per-step retrieval observability. I also contributed to the Meko MCP server, making knowledge-base operations more reliable for AI agents.
 
-I enjoy working across the stack, from designing APIs and data flows to shaping the interface that makes a product understandable. I bring a practical, ownership-oriented approach to ambiguous problems and care deeply about maintainable code, clear communication, and useful outcomes.
+Beyond Meko, I have made contributions to YugabyteDB and open-source projects, including LangChain4j, where my YugabyteDB embedding-store integration and PgDistRagRetriever were merged upstream. I have also worked on database migration tooling, smart drivers, CI infrastructure, observability, and internal analytics systems.
 
-I would welcome the opportunity to discuss how my experience could support your team. Thank you for your time and consideration.
+These experiences have given me a strong foundation in backend engineering, distributed systems, databases, cloud infrastructure, and AI-powered applications, while also teaching me to work effectively in large production codebases and open-source projects.
 
-Sincerely,
-Krishna Tripathi`;
+I would welcome the opportunity to bring this experience to your engineering team and contribute to building reliable, scalable software.
+
+Best regards,
+Krishna Tripathi
+GitHub: github.com/krishna-yb`;
         }
 
         // Download cover letter with today's date embedded in filename + content
         function downloadCoverLetter() {
-            const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
             const blob = new Blob([buildCoverLetter()], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `KRISHNA_TRIPATHI_COVER_LETTER_${datePart}.txt`;
+            link.download = 'KRISHNA_TRIPATHI_COVER_LETTER.txt';
             link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
