@@ -1198,31 +1198,22 @@
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <!-- Search toolbar -->
             <!-- Search toolbar -->
-            <!-- Search & Zoom toolbar -->
+            <!-- Search toolbar -->
             <div class="pdf-search-bar" id="pdfSearchBar">
                 <svg class="pdf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="pdfSearch" placeholder="Search resume…" autocomplete="off" spellcheck="false" />
-                <kbd class="pdf-search-kbd" id="pdfSearchKbd">Ctrl K</kbd>
+                <input type="text" id="pdfSearch" placeholder="Search in resume…" autocomplete="off" spellcheck="false" />
                 <span class="pdf-match-count" id="pdfMatchCount"></span>
-                <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match (Shift+Enter)" aria-label="Previous match">
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match" aria-label="Previous match">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
                 </button>
-                <button class="pdf-nav-btn" onclick="pdfNavMatch(1)" title="Next match (Enter)" aria-label="Next match">
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(1)" title="Next match" aria-label="Next match">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <button class="pdf-clear-btn" onclick="pdfClearSearch()" title="Clear search" aria-label="Clear search">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <div class="pdf-toolbar-divider"></div>
-                <button class="pdf-zoom-btn" onclick="zoomPDF(-0.15)" title="Zoom out (-)" aria-label="Zoom out">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
-                <span class="pdf-zoom-level" id="pdfZoomLevel" onclick="resetZoomPDF()" title="Reset zoom (100%)">100%</span>
-                <button class="pdf-zoom-btn" onclick="zoomPDF(0.15)" title="Zoom in (+)" aria-label="Zoom in">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
             <!-- Viewer: canvas + text layer -->
@@ -1394,7 +1385,7 @@
                 // Canvas must NOT intercept mouse so text layer can receive events
                 canvas.style.pointerEvents = 'none';
 
-                await page.render({ canvasContext: ctx, viewport }).promise;
+                await page.render({ canvasContext: ctx, viewport }).promise; initPdfMagnifier();
                 console.log('[PDF.js] Canvas rendered');
 
                 // Text layer: same pixel-space as canvas, scaled down via transform
@@ -1877,25 +1868,70 @@ GitHub: github.com/krishna-yb`;
             }
         });
     
-        // ── Zoom State & Functionality ───────────────────────────────────────────
-        var _currentZoomFactor = 1.0;
+        // ── Hover Magnifier Glass (Loupe Lens) ──────────────────────────────────
+        function initPdfMagnifier() {
+            var wrapper = document.getElementById('pdfViewerWrapper');
+            var mainCanvas = document.getElementById('pdfCanvas');
+            if (!wrapper || !mainCanvas) return;
 
-        function zoomPDF(delta) {
-            _currentZoomFactor = Math.max(0.6, Math.min(2.5, _currentZoomFactor + delta));
-            applyZoom();
-        }
-
-        function resetZoomPDF() {
-            _currentZoomFactor = 1.0;
-            applyZoom();
-        }
-
-        function applyZoom() {
-            var zoomEl = document.getElementById('pdfZoomLevel');
-            if (zoomEl) zoomEl.textContent = Math.round(_currentZoomFactor * 100) + '%';
-            if (window._pdfDoc) {
-                loadPDF();
+            var lens = document.getElementById('pdfMagnifierLens');
+            if (!lens) {
+                lens = document.createElement('div');
+                lens.id = 'pdfMagnifierLens';
+                lens.className = 'pdf-magnifier-lens';
+                var lensCanvas = document.createElement('canvas');
+                lens.appendChild(lensCanvas);
+                wrapper.appendChild(lens);
             }
+
+            var lensCanvas = lens.querySelector('canvas');
+            var lensCtx = lensCanvas.getContext('2d');
+            var zoomRatio = 2.0; // 2x magnification
+            var lensSize = 170;  // 170px lens circle
+
+            var dpr = window.devicePixelRatio || 1;
+            lensCanvas.width = lensSize * dpr;
+            lensCanvas.height = lensSize * dpr;
+            lensCanvas.style.width = lensSize + 'px';
+            lensCanvas.style.height = lensSize + 'px';
+
+            function updateLens(e) {
+                var rect = wrapper.getBoundingClientRect();
+                var x = e.clientX - rect.left;
+                var y = e.clientY - rect.top;
+
+                if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+                    lens.style.display = 'none';
+                    return;
+                }
+
+                lens.style.left = (x - lensSize / 2) + 'px';
+                lens.style.top = (y - lensSize / 2) + 'px';
+                lens.style.display = 'block';
+
+                var scaleX = mainCanvas.width / rect.width;
+                var scaleY = mainCanvas.height / rect.height;
+
+                var srcX = x * scaleX;
+                var srcY = y * scaleY;
+                var srcW = (lensSize / zoomRatio) * scaleX;
+                var srcH = (lensSize / zoomRatio) * scaleY;
+
+                lensCtx.clearRect(0, 0, lensCanvas.width, lensCanvas.height);
+                lensCtx.drawImage(
+                    mainCanvas,
+                    srcX - srcW / 2, srcY - srcH / 2, srcW, srcH,
+                    0, 0, lensCanvas.width, lensCanvas.height
+                );
+            }
+
+            wrapper.addEventListener('mousemove', updateLens);
+            wrapper.addEventListener('mouseleave', function() {
+                lens.style.display = 'none';
+            });
+            wrapper.addEventListener('touchstart', function() {
+                lens.style.display = 'none';
+            }, { passive: true });
         }
 
         // ── Toast Notification System ─────────────────────────────────────────────
@@ -1956,23 +1992,11 @@ GitHub: github.com/krishna-yb`;
             document.body.removeChild(input);
         }
 
-        // ── Global Keyboard Shortcuts (Ctrl+K / Cmd+K / Esc) ─────────────────────
+        // ── Keyboard Shortcuts (Esc to clear search) ────────────────────────────
         document.addEventListener('keydown', function(e) {
-            // Update shortcut kbd badge for Mac vs Windows
-            var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            var kbd   = document.getElementById('pdfSearchKbd');
-            if (kbd) kbd.textContent = isMac ? '⌘K' : 'Ctrl K';
-
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
+            if (e.key === 'Escape') {
                 var searchInput = document.getElementById('pdfSearch');
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.select();
-                }
-            } else if (e.key === 'Escape') {
-                var searchInput = document.getElementById('pdfSearch');
-                if (document.activeElement === searchInput) {
+                if (searchInput && document.activeElement === searchInput) {
                     searchInput.blur();
                 }
                 pdfClearSearch();
