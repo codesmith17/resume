@@ -1292,28 +1292,24 @@
 
         @media (max-width: 620px) {
             .controls {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
-                grid-template-areas:
-                    "resume letter theme"
-                    "portfolio portfolio portfolio";
+                display: flex;
+                flex-wrap: wrap;
                 gap: 8px;
                 align-items: stretch;
                 justify-content: initial;
                 padding: 10px;
             }
 
-            .controls #resumeToggle { grid-area: resume; }
-            .controls #letterToggle { grid-area: letter; }
-            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
-                grid-area: portfolio;
-                width: 100%;
+            .controls #resumeToggle,
+            .controls #letterToggle {
+                flex: 1 1 calc(50% - 24px);
                 min-width: 0;
-                box-sizing: border-box;
+                width: auto;
             }
+
             .controls #themeToggle {
-                grid-area: theme;
                 position: relative;
+                flex: 0 0 40px;
                 width: 40px;
                 min-width: 40px;
                 height: 40px;
@@ -1324,21 +1320,39 @@
                 white-space: normal;
             }
 
-            .controls .view-toggle,
             .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
+                flex: 1 1 100%;
+                width: 100%;
                 min-width: 0;
+                box-sizing: border-box;
+            }
+
+            .controls #copyEmailBtn,
+            .controls #shareBtn {
+                flex: 1 1 calc(50% - 4px);
+                width: calc(50% - 4px);
+                min-width: 0;
+                box-sizing: border-box;
+            }
+
+            .controls .view-toggle,
+            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"],
+            .controls #copyEmailBtn,
+            .controls #shareBtn {
+                min-height: 40px;
                 padding: 10px 7px;
                 font-size: 12px;
                 gap: 5px;
                 white-space: nowrap;
-            }
-
-            .controls .view-toggle {
-                width: 100%;
+                justify-content: center;
+                text-align: center;
+                border-radius: 8px;
             }
 
             .controls .view-toggle .icon,
-            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] .icon {
+            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] .icon,
+            .controls #copyEmailBtn .icon,
+            .controls #shareBtn .icon {
                 width: 15px;
                 height: 15px;
                 flex-basis: 15px;
