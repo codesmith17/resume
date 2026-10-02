@@ -715,6 +715,29 @@
             }
             
             .pdf-container {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        #pdfViewerWrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+            line-height: 0;
+        }
+        #pdfCanvas {
+            display: block;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+        }
                 padding: 0;
                 border-radius: 8px;
                 margin: 0;
@@ -857,6 +880,29 @@
             }
             
             .pdf-container {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        #pdfViewerWrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+            line-height: 0;
+        }
+        #pdfCanvas {
+            display: block;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+        }
                 border-radius: 8px;
             }
 
@@ -882,7 +928,30 @@
         body { background: var(--page-bg); color: var(--text); }
         .resume-container, .controls, .pdf-fallback { background: var(--panel-bg); border-color: var(--line); color: var(--text); }
         .controls { background: var(--panel-bg); }
-        .pdf-container { background: var(--panel-bg); border-color: var(--line); }
+        .pdf-container {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        #pdfViewerWrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+            line-height: 0;
+        }
+        #pdfCanvas {
+            display: block;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+        } background: var(--panel-bg); border-color: var(--line); }
         [data-theme="dark"] #adobe-dc-view { background: #11161c; }
         .theme-btn, .cover-letter-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
         .theme-btn:hover, .cover-letter-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -1964,6 +2033,18 @@ GitHub: github.com/krishna-yb`;
             }, { passive: true });
 
             console.log('[PDF.js] Magnifier initialized OK');
+
+        // ── Auto Adjust PDF on Window Resize & Browser Zoom (Ctrl + Scroll) ───────
+        var _resizeTimer = null;
+        window.addEventListener('resize', function() {
+            if (_resizeTimer) clearTimeout(_resizeTimer);
+            _resizeTimer = setTimeout(function() {
+                if (window._pdfDoc) {
+                    console.log('[PDF.js] Browser zoom/resize -> auto adjusting PDF to container');
+                    loadPDF();
+                }
+            }, 150);
+        });
         }
 
         // ── Toast Notification System ─────────────────────────────────────────────
