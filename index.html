@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,12 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
     
     <!-- Adobe PDF Embed API for professional PDF viewing -->
-    <script src="https://acrobatservices.adobe.com/view-sdk/viewer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+    <!-- pdf.worker loaded internally by PDF.js via workerSrc below -->
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -18,6 +23,78 @@
             box-sizing: border-box;
         }
 
+
+        /* === PDF viewer layout ================================================ */
+        #pdfViewerWrapper { position:relative; display:inline-block; width:100%; line-height:0; }
+        #pdfCanvas        { display:block; width:100%; height:auto; pointer-events:none; }
+
+        /* === PDF.js text layer ================================================
+           Transparent spans sit exactly over rendered canvas text.
+           user-select:text makes them drag-selectable with the mouse. */
+        #pdfTextLayer {
+            position:absolute; top:0; left:0;
+            overflow:hidden; opacity:1; line-height:1;
+            user-select:text; -webkit-user-select:text;
+            pointer-events:auto; cursor:text;
+        }
+        #pdfTextLayer > span {
+            color:transparent; position:absolute; white-space:pre;
+            cursor:text; transform-origin:0% 0%; border-radius:2px;
+            user-select:text; -webkit-user-select:text;
+            transition:background .12s;
+        }
+        #pdfTextLayer > a {
+            position:absolute; display:block;
+            background:transparent; cursor:pointer; user-select:none;
+        }
+                /* ── Search highlights (Chrome / VS Code inspired) ──────────────────────
+        *  Inactive matches  : soft canary yellow, semi-transparent
+        *  Active match      : vivid orange + thick bottom border (never relying
+        *                       on color alone → accessible for color-blind users)
+        * ─────────────────────────────────────────────────────────────────────── */
+        /* Overlay divs — absolutely positioned over matched glyphs.
+           Spans are NEVER modified so PDF.js glyph layout is 100% preserved. */
+        .pdf-hl-overlay {
+            position      : absolute;
+            border-radius : 2px;
+            pointer-events: none;
+            transition    : background 0.12s;
+        }
+        .pdf-hl-overlay.pdf-hl {
+            background : rgba(255, 220, 0, 0.32);          /* soft yellow */
+        }
+        .pdf-hl-overlay.pdf-hl-active {
+            background : rgba(255, 140, 0, 0.50) !important; /* vivid orange */
+            outline    : 2px solid rgba(210, 95, 0, 0.85);
+            box-shadow : 0 0 0 3px rgba(255,140,0,0.18);
+        }
+        /* Text selected by mouse – blue tint so it looks intentional */
+        #pdfTextLayer ::selection {
+            background : rgba(66, 133, 244, 0.35);
+            color      : transparent;
+        }
+
+        /* === Search toolbar =================================================== */
+        .pdf-search-bar {
+            display:flex; align-items:center; gap:6px;
+            padding:7px 12px; background:#f0f4ff;
+            border:1px solid #c7d2fe; border-radius:8px;
+            margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.06);
+        }
+        .pdf-search-bar input {
+            flex:1; border:1px solid #a5b4fc; border-radius:5px;
+            padding:5px 10px; font-size:14px; outline:none;
+            background:#fff; color:#1e293b;
+        }
+        .pdf-search-bar input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.18); }
+        .pdf-match-count { font-size:12px; color:#555; min-width:62px; text-align:center; white-space:nowrap; }
+        .pdf-nav-btn,.pdf-clear-btn {
+            background:#fff; border:1px solid #c7d2fe; border-radius:5px;
+            padding:4px 9px; cursor:pointer; font-size:14px; color:#4338ca;
+            line-height:1; transition:background .15s,color .15s;
+        }
+        .pdf-nav-btn:hover,.pdf-clear-btn:hover { background:#e0e7ff; }
+        .pdf-search-icon { font-size:15px; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f8f9fa;
@@ -900,8 +977,20 @@
         <div class="loading" id="loading">Loading resume...</div>
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
-            <!-- Adobe PDF Embed Viewer -->
-            <div id="adobe-dc-view"></div>
+            <!-- Search toolbar -->
+            <div class="pdf-search-bar" id="pdfSearchBar">
+                <span class="pdf-search-icon">🔍</span>
+                <input type="text" id="pdfSearch" placeholder="Search in resume…" autocomplete="off" />
+                <span class="pdf-match-count" id="pdfMatchCount"></span>
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match">&#8593;</button>
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(1)"  title="Next match">&#8595;</button>
+                <button class="pdf-clear-btn" onclick="pdfClearSearch()" title="Clear search">&#10005;</button>
+            </div>
+            <!-- Viewer: canvas + text layer -->
+            <div id="pdfViewerWrapper" style="position:relative; display:inline-block; width:100%;">
+                <canvas id="pdfCanvas" style="display:block; width:100%; height:auto;"></canvas>
+                <div id="pdfTextLayer"></div>
+            </div>
         </div>
 
         <div class="pdf-fallback" id="pdfFallback" style="display: none;">
@@ -1018,9 +1107,220 @@
 
         // Global variables
         document.addEventListener('DOMContentLoaded', function() {
-            initializePDFViewer();
+            loadPDF();
         });
+        // ── PDF.js: load page, render canvas + text layer + annotation links ──────
+        async function loadPDF() {
+            const pdfUrl = './resume.pdf?v=20260929-1';
+            console.log('[PDF.js] loadPDF() called');
+            try {
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                console.log('[PDF.js] PDF loaded, pages:', pdf.numPages);
+                window._pdfDoc = pdf;
 
+                const canvas    = document.getElementById('pdfCanvas');
+                const textLayer = document.getElementById('pdfTextLayer');
+                const wrapper   = document.getElementById('pdfViewerWrapper');
+                if (!canvas) { console.error('[PDF.js] canvas not found'); showPDFFallback(); return; }
+
+                // Show viewer first so wrapper.clientWidth is available
+                showPDFViewer();
+
+                const ctx  = canvas.getContext('2d');
+                const page = await pdf.getPage(1);
+
+                // KEY FIX: fit PDF to container width so canvas px == CSS px
+                // This eliminates the text-layer offset completely.
+                const containerWidth  = wrapper.clientWidth || 860;
+                const naturalViewport = page.getViewport({ scale: 1 });
+                const scale           = containerWidth / naturalViewport.width;
+                const dpr             = window.devicePixelRatio || 1;
+                const viewport        = page.getViewport({ scale: scale * dpr });
+                const cssW            = Math.floor(viewport.width  / dpr);
+                const cssH            = Math.floor(viewport.height / dpr);
+
+                console.log('[PDF.js] containerWidth=' + containerWidth +
+                            ' naturalW=' + naturalViewport.width.toFixed(1) +
+                            ' scale=' + scale.toFixed(3) +
+                            ' dpr=' + dpr +
+                            ' canvas=' + viewport.width + 'x' + viewport.height +
+                            ' css=' + cssW + 'x' + cssH);
+
+                // Set canvas pixel dimensions (actual render size)
+                canvas.width        = viewport.width;
+                canvas.height       = viewport.height;
+                // Set canvas CSS dimensions (display size = container width)
+                canvas.style.width  = cssW + 'px';
+                canvas.style.height = cssH + 'px';
+                // Canvas must NOT intercept mouse so text layer can receive events
+                canvas.style.pointerEvents = 'none';
+
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                console.log('[PDF.js] Canvas rendered');
+
+                // Text layer: same pixel-space as canvas, scaled down via transform
+                textLayer.innerHTML = '';
+                textLayer.style.width           = viewport.width  + 'px';
+                textLayer.style.height          = viewport.height + 'px';
+                textLayer.style.transform       = 'scale(' + (1/dpr) + ')';
+                textLayer.style.transformOrigin = '0 0';
+
+                const textContent = await page.getTextContent();
+                pdfjsLib.renderTextLayer({
+                    textContent,
+                    container: textLayer,
+                    viewport,
+                    textDivs: []
+                });
+
+                setTimeout(function() {
+                    var spans = textLayer.querySelectorAll('span');
+                    console.log('[PDF.js] Text layer done: ' + spans.length + ' spans');
+                    if (spans.length > 0) {
+                        var s = spans[0];
+                        console.log('[PDF.js] First span: "' + s.textContent.trim() +
+                                    '" top=' + s.style.top + ' left=' + s.style.left);
+                    }
+                }, 400);
+
+                // Annotation layer: URL links open in new tab
+                const annotations = await page.getAnnotations();
+                console.log('[PDF.js] Annotations found:', annotations.length);
+                annotations.forEach(function(ann) {
+                    if (ann.subtype === 'Link' && ann.url) {
+                        var r   = ann.rect;
+                        var tl  = viewport.convertToViewportPoint(r[0], r[1]);
+                        var br  = viewport.convertToViewportPoint(r[2], r[3]);
+                        var a   = document.createElement('a');
+                        var raw = ann.url;
+                        a.href   = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+                        a.target = '_blank';
+                        a.rel    = 'noopener noreferrer';
+                        a.title  = a.href;
+                        Object.assign(a.style, {
+                            position: 'absolute',
+                            left:   Math.min(tl[0], br[0]) + 'px',
+                            top:    Math.min(tl[1], br[1]) + 'px',
+                            width:  Math.abs(br[0] - tl[0]) + 'px',
+                            height: Math.abs(br[1] - tl[1]) + 'px',
+                            cursor: 'pointer',
+                            display: 'block'
+                        });
+                        textLayer.appendChild(a);
+                    }
+                });
+
+                // Live search on typing
+                var searchInput = document.getElementById('pdfSearch');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        pdfHighlightAll(searchInput.value.trim());
+                    });
+                    searchInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') pdfNavMatch(e.shiftKey ? -1 : 1);
+                    });
+                }
+
+            } catch (err) {
+                console.error('[PDF.js] loadPDF FAILED:', err);
+                showPDFFallback();
+            }
+        }
+
+        // ── Search: overlay-div approach ─────────────────────────────────────────
+        // We NEVER modify span text nodes (no mark insertion).
+        // Instead we use the Range API to get the exact viewport rect of each
+        // matched substring, convert to textLayer local coordinates, and position
+        // a transparent overlay <div> precisely on top of those glyphs.
+        // This eliminates ALL text-shift bugs caused by splitting spans.
+        var _matchMarks  = [];   // overlay <div> elements
+        var _matchCursor = -1;
+
+        function pdfHighlightAll(query) {
+            var textLayer = document.getElementById('pdfTextLayer');
+            var countEl   = document.getElementById('pdfMatchCount');
+            var dpr       = window.devicePixelRatio || 1;
+
+            // Remove all previous overlays (spans untouched)
+            textLayer.querySelectorAll('.pdf-hl-overlay').forEach(function(el) { el.remove(); });
+            _matchMarks  = [];
+            _matchCursor = -1;
+            if (countEl) { countEl.textContent = ''; countEl.style.fontWeight = 'normal'; countEl.style.color = '#555'; }
+            if (!query) return;
+
+            var lower     = query.toLowerCase();
+            var layerRect = textLayer.getBoundingClientRect();
+
+            textLayer.querySelectorAll('span').forEach(function(span) {
+                if (span.tagName !== 'SPAN') return;
+
+                // Always use the original text node (never modified)
+                var textNode = span.firstChild;
+                if (!textNode || textNode.nodeType !== 3 /* TEXT_NODE */) return;
+
+                var text = textNode.textContent;
+                var idx  = text.toLowerCase().indexOf(lower);
+
+                while (idx !== -1) {
+                    try {
+                        var range = document.createRange();
+                        range.setStart(textNode, idx);
+                        range.setEnd(textNode, Math.min(idx + query.length, textNode.length));
+                        var r = range.getBoundingClientRect();
+
+                        if (r.width > 0 && r.height > 0) {
+                            // textLayer has transform:scale(1/dpr) origin 0,0
+                            // → convert viewport offset → local textLayer coords by × dpr
+                            var overlay = document.createElement('div');
+                            overlay.className              = 'pdf-hl-overlay pdf-hl';
+                            overlay.style.position        = 'absolute';
+                            overlay.style.left            = ((r.left - layerRect.left) * dpr) + 'px';
+                            overlay.style.top             = ((r.top  - layerRect.top ) * dpr) + 'px';
+                            overlay.style.width           = (r.width  * dpr) + 'px';
+                            overlay.style.height          = (r.height * dpr) + 'px';
+                            overlay.style.pointerEvents   = 'none';
+                            textLayer.appendChild(overlay);
+                            _matchMarks.push(overlay);
+                        }
+                    } catch(e) {
+                        console.warn('[PDF.js] Range highlight error:', e);
+                    }
+                    idx = text.toLowerCase().indexOf(lower, idx + query.length);
+                }
+            });
+
+            if (_matchMarks.length === 0) {
+                if (countEl) { countEl.textContent = 'No results'; countEl.style.color = '#dc2626'; countEl.style.fontWeight = '600'; }
+                console.log('[PDF.js] Search "' + query + '": no results');
+            } else {
+                _matchCursor = 0;
+                _matchMarks[0].classList.add('pdf-hl-active');
+                _matchMarks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (countEl) { countEl.textContent = '1 of ' + _matchMarks.length; countEl.style.color = '#c2410c'; countEl.style.fontWeight = '600'; }
+                console.log('[PDF.js] Search "' + query + '": ' + _matchMarks.length + ' matches');
+            }
+        }
+
+        function pdfNavMatch(dir) {
+            if (_matchMarks.length === 0) return;
+            _matchMarks[_matchCursor].classList.remove('pdf-hl-active');
+            _matchCursor = (_matchCursor + dir + _matchMarks.length) % _matchMarks.length;
+            _matchMarks[_matchCursor].classList.add('pdf-hl-active');
+            _matchMarks[_matchCursor].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var countEl = document.getElementById('pdfMatchCount');
+            if (countEl) countEl.textContent = (_matchCursor + 1) + ' of ' + _matchMarks.length;
+        }
+
+        function pdfClearSearch() {
+            var inp = document.getElementById('pdfSearch');
+            if (inp) inp.value = '';
+            pdfHighlightAll('');
+        }
+
+        function searchPDF() {
+            var el = document.getElementById('pdfSearch');
+            pdfHighlightAll(el ? el.value.trim() : '');
+        }
         // Download PDF function
         async function downloadPDF() {
             try {
@@ -1041,6 +1341,7 @@
             }
         }
 
+        /* Adobe PDF Embed API -- commented out, preserved for fallback
         // Adobe PDF Embed API implementation
         function initializePDFViewer() {
             const loading = document.getElementById('loading');
@@ -1147,7 +1448,7 @@
             }
         }
         
-        function showPDFViewer() {
+        */        function showPDFViewer() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('pdfContainer').style.display = 'block';
             document.getElementById('pdfFallback').style.display = 'none';
