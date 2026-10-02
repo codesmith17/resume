@@ -76,25 +76,57 @@
 
         /* === Search toolbar =================================================== */
         .pdf-search-bar {
-            display:flex; align-items:center; gap:6px;
-            padding:7px 12px; background:#f0f4ff;
-            border:1px solid #c7d2fe; border-radius:8px;
-            margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.06);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            background: #f0f4ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+            width: 100%;
+            box-sizing: border-box;
         }
         .pdf-search-bar input {
-            flex:1; border:1px solid #a5b4fc; border-radius:5px;
-            padding:5px 10px; font-size:14px; outline:none;
-            background:#fff; color:#1e293b;
+            flex: 1;
+            min-width: 0; /* allows input to shrink on mobile without overflowing buttons */
+            border: 1px solid #a5b4fc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            color: #1e293b;
         }
         .pdf-search-bar input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.18); }
-        .pdf-match-count { font-size:12px; color:#555; min-width:62px; text-align:center; white-space:nowrap; }
+        .pdf-match-count { font-size:12px; color:#555; min-width:48px; text-align:center; white-space:nowrap; flex-shrink:0; }
         .pdf-nav-btn,.pdf-clear-btn {
             background:#fff; border:1px solid #c7d2fe; border-radius:5px;
-            padding:4px 9px; cursor:pointer; font-size:14px; color:#4338ca;
-            line-height:1; transition:background .15s,color .15s;
+            padding:4px 8px; cursor:pointer; font-size:13px; color:#4338ca;
+            line-height:1; transition:background .15s,color .15s; flex-shrink:0;
         }
         .pdf-nav-btn:hover,.pdf-clear-btn:hover { background:#e0e7ff; }
-        .pdf-search-icon { font-size:15px; }
+        .pdf-search-icon { font-size:15px; flex-shrink:0; }
+
+        @media (max-width: 520px) {
+            .pdf-search-bar {
+                padding: 6px 8px;
+                gap: 4px;
+            }
+            .pdf-search-bar input {
+                padding: 4px 6px;
+                font-size: 13px;
+            }
+            .pdf-match-count {
+                font-size: 11px;
+                min-width: 36px;
+            }
+            .pdf-nav-btn, .pdf-clear-btn {
+                padding: 3px 6px;
+                font-size: 12px;
+            }
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f8f9fa;
