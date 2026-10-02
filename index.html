@@ -169,6 +169,117 @@
             background: #e2e8f0;
         }
 
+        /* ══ Zoom Controls & Keyboard Badges ═════════════════════════════════ */
+        .pdf-toolbar-divider {
+            width: 1px;
+            height: 18px;
+            background: #cbd5e1;
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+        .pdf-zoom-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .pdf-zoom-btn svg { width: 13px; height: 13px; }
+        .pdf-zoom-btn:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+        .pdf-zoom-level {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+        }
+        .pdf-zoom-level:hover { background: #e2e8f0; color: #0f172a; }
+        .pdf-search-kbd {
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 600;
+            color: #64748b;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 1.5px 5px;
+            flex-shrink: 0;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* ══ Copy Email & Share Button Styles ════════════════════════════════ */
+        .copy-email-btn, .share-btn {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 9px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .copy-email-btn:hover, .share-btn:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 9px rgba(0,0,0,0.06);
+        }
+        .copy-email-btn:active, .share-btn:active {
+            transform: translateY(0);
+            background: #f1f5f9;
+        }
+
+        /* ══ Toast Notification ═════════════════════════════════════════════ */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 9999px;
+            font-size: 13.5px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25), 0 8px 10px -6px rgba(0,0,0,0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Responsive scaling */
         @media (max-width: 520px) {
             .pdf-search-bar {
@@ -1061,6 +1172,14 @@
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></svg>
                 Portfolio
             </a>
+                        <button class="copy-email-btn" id="copyEmailBtn" onclick="copyEmailToClipboard()" type="button" title="Copy email address" aria-label="Copy email address">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span>Copy Email</span>
+            </button>
+            <button class="share-btn" id="shareBtn" onclick="shareResume()" type="button" title="Share resume" aria-label="Share resume">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                <span>Share</span>
+            </button>
             <button class="theme-btn" id="themeToggle" type="button" aria-label="Switch to dark mode">
                 <svg class="icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"/></svg>
                 <svg class="icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -1079,12 +1198,14 @@
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <!-- Search toolbar -->
             <!-- Search toolbar -->
+            <!-- Search & Zoom toolbar -->
             <div class="pdf-search-bar" id="pdfSearchBar">
                 <svg class="pdf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="pdfSearch" placeholder="Search resume… (Press Enter to jump)" autocomplete="off" spellcheck="false" />
+                <input type="text" id="pdfSearch" placeholder="Search resume…" autocomplete="off" spellcheck="false" />
+                <kbd class="pdf-search-kbd" id="pdfSearchKbd">Ctrl K</kbd>
                 <span class="pdf-match-count" id="pdfMatchCount"></span>
                 <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match (Shift+Enter)" aria-label="Previous match">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
@@ -1094,6 +1215,14 @@
                 </button>
                 <button class="pdf-clear-btn" onclick="pdfClearSearch()" title="Clear search" aria-label="Clear search">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <div class="pdf-toolbar-divider"></div>
+                <button class="pdf-zoom-btn" onclick="zoomPDF(-0.15)" title="Zoom out (-)" aria-label="Zoom out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <span class="pdf-zoom-level" id="pdfZoomLevel" onclick="resetZoomPDF()" title="Reset zoom (100%)">100%</span>
+                <button class="pdf-zoom-btn" onclick="zoomPDF(0.15)" title="Zoom in (+)" aria-label="Zoom in">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
             <!-- Viewer: canvas + text layer -->
@@ -1243,7 +1372,7 @@
                 // This eliminates the text-layer offset completely.
                 const containerWidth  = wrapper.clientWidth || 860;
                 const naturalViewport = page.getViewport({ scale: 1 });
-                const scale           = containerWidth / naturalViewport.width;
+                const scale           = (containerWidth / naturalViewport.width) * (_currentZoomFactor || 1.0);
                 const dpr             = window.devicePixelRatio || 1;
                 const viewport        = page.getViewport({ scale: scale * dpr });
                 const cssW            = Math.floor(viewport.width  / dpr);
@@ -1329,6 +1458,8 @@
                 var searchInput = document.getElementById('pdfSearch');
                 if (searchInput) {
                     searchInput.addEventListener('input', function() {
+                        var kbd = document.getElementById('pdfSearchKbd');
+                        if (kbd) kbd.style.display = searchInput.value ? 'none' : 'inline-block';
                         pdfHighlightAll(searchInput.value.trim());
                     });
                     searchInput.addEventListener('keydown', function(e) {
@@ -1745,7 +1876,110 @@ GitHub: github.com/krishna-yb`;
                 downloadPDF();
             }
         });
-    </script>
+    
+        // ── Zoom State & Functionality ───────────────────────────────────────────
+        var _currentZoomFactor = 1.0;
 
+        function zoomPDF(delta) {
+            _currentZoomFactor = Math.max(0.6, Math.min(2.5, _currentZoomFactor + delta));
+            applyZoom();
+        }
+
+        function resetZoomPDF() {
+            _currentZoomFactor = 1.0;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            var zoomEl = document.getElementById('pdfZoomLevel');
+            if (zoomEl) zoomEl.textContent = Math.round(_currentZoomFactor * 100) + '%';
+            if (window._pdfDoc) {
+                loadPDF();
+            }
+        }
+
+        // ── Toast Notification System ─────────────────────────────────────────────
+        var _toastTimer = null;
+        function showToast(message) {
+            var toast = document.getElementById('toastNotification');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.add('show');
+            if (_toastTimer) clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2600);
+        }
+
+        // ── Copy Email & Share Functions ──────────────────────────────────────────
+        function copyEmailToClipboard() {
+            var email = "kanchanlatakrishna@gmail.com";
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(email).then(function() {
+                    showToast('Copied email to clipboard! 📋');
+                }).catch(function() {
+                    fallbackCopyText(email, 'Copied email to clipboard! 📋');
+                });
+            } else {
+                fallbackCopyText(email, 'Copied email to clipboard! 📋');
+            }
+        }
+
+        function shareResume() {
+            var shareData = {
+                title: 'Krishna Tripathi - Resume',
+                text: 'Check out Krishna Tripathi\'s Resume',
+                url: window.location.href
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(function() { /* user cancelled share */ });
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(window.location.href).then(function() {
+                    showToast('Resume link copied to clipboard! 🔗');
+                });
+            } else {
+                fallbackCopyText(window.location.href, 'Resume link copied to clipboard! 🔗');
+            }
+        }
+
+        function fallbackCopyText(text, successMsg) {
+            var input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg);
+            } catch (err) {
+                showToast('Failed to copy text');
+            }
+            document.body.removeChild(input);
+        }
+
+        // ── Global Keyboard Shortcuts (Ctrl+K / Cmd+K / Esc) ─────────────────────
+        document.addEventListener('keydown', function(e) {
+            // Update shortcut kbd badge for Mac vs Windows
+            var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            var kbd   = document.getElementById('pdfSearchKbd');
+            if (kbd) kbd.textContent = isMac ? '⌘K' : 'Ctrl K';
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                var searchInput = document.getElementById('pdfSearch');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            } else if (e.key === 'Escape') {
+                var searchInput = document.getElementById('pdfSearch');
+                if (document.activeElement === searchInput) {
+                    searchInput.blur();
+                }
+                pdfClearSearch();
+            }
+        });
+</script>
+
+    <div class="toast-notification" id="toastNotification"></div>
 </body>
 </html>
