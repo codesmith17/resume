@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -29,7 +29,7 @@
             width: 170px !important;
             height: 170px !important;
             border-radius: 50% !important;
-            border: 3.5px solid #ffffff !important;
+            border: 3.5px solid #2563eb !important;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.15) !important;
             pointer-events: none !important;
             display: none;
@@ -203,7 +203,7 @@
         .pdf-match-count:not(:empty) {
             display: inline-block;
         }
-        .pdf-nav-btn, .pdf-clear-btn {
+        .pdf-nav-btn, .pdf-clear-btn, .pdf-magnifier-toggle-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -218,19 +218,26 @@
             flex-shrink: 0;
             padding: 0;
         }
-        .pdf-nav-btn svg, .pdf-clear-btn svg {
+        .pdf-nav-btn svg, .pdf-clear-btn svg, .pdf-magnifier-toggle-btn svg {
             width: 14px;
             height: 14px;
         }
-        .pdf-nav-btn:hover, .pdf-clear-btn:hover {
+        .pdf-nav-btn:hover, .pdf-clear-btn:hover, .pdf-magnifier-toggle-btn:hover {
             background: #f1f5f9;
             color: #1e293b;
             border-color: #cbd5e1;
             transform: translateY(-1px);
         }
-        .pdf-nav-btn:active, .pdf-clear-btn:active {
+        .pdf-nav-btn:active, .pdf-clear-btn:active, .pdf-magnifier-toggle-btn:active {
             transform: translateY(0);
             background: #e2e8f0;
+        }
+
+        .pdf-magnifier-toggle-btn.is-active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
         }
 
         /* ══ Zoom Controls & Keyboard Badges ═════════════════════════════════ */
@@ -480,12 +487,12 @@
                 font-size: 10px;
                 padding: 1px 6px;
             }
-            .pdf-nav-btn, .pdf-clear-btn {
+            .pdf-nav-btn, .pdf-clear-btn, .pdf-magnifier-toggle-btn {
                 width: 24px;
                 height: 24px;
                 border-radius: 5px;
             }
-            .pdf-nav-btn svg, .pdf-clear-btn svg {
+            .pdf-nav-btn svg, .pdf-clear-btn svg, .pdf-magnifier-toggle-btn svg {
                 width: 12px;
                 height: 12px;
             }
@@ -1085,6 +1092,48 @@
             height: auto !important;
         } background: var(--panel-bg); border-color: var(--line); }
         [data-theme="dark"] #adobe-dc-view { background: #11161c; }
+        [data-theme="dark"] .pdf-search-bar {
+            background: var(--panel-bg);
+            border-color: var(--line);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .pdf-search-bar:focus-within {
+            border-color: #3b82f6;
+            background: var(--panel-bg);
+            box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.25);
+        }
+        [data-theme="dark"] .pdf-search-icon {
+            color: var(--muted);
+        }
+        [data-theme="dark"] .pdf-search-bar input {
+            color: var(--text);
+        }
+        [data-theme="dark"] .pdf-search-bar input::placeholder {
+            color: var(--muted);
+        }
+        [data-theme="dark"] .pdf-match-count {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        [data-theme="dark"] .pdf-nav-btn,
+        [data-theme="dark"] .pdf-clear-btn,
+        [data-theme="dark"] .pdf-magnifier-toggle-btn {
+            color: var(--muted);
+        }
+        [data-theme="dark"] .pdf-nav-btn:hover,
+        [data-theme="dark"] .pdf-clear-btn:hover,
+        [data-theme="dark"] .pdf-magnifier-toggle-btn:hover {
+            background: var(--page-bg);
+            color: var(--text);
+            border-color: var(--line);
+        }
+        [data-theme="dark"] .pdf-magnifier-toggle-btn.is-active {
+            background: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
         .theme-btn, .cover-letter-btn { background: var(--panel-bg); border: 1px solid var(--line); color: var(--text); }
         .theme-btn:hover, .cover-letter-btn:hover { border-color: var(--accent); color: var(--accent); }
         .resume-footer { background: var(--panel-bg); border-top: 1px solid var(--line); color: var(--text); }
