@@ -1175,7 +1175,12 @@
 
                 setTimeout(function() {
                     var spans = textLayer.querySelectorAll('span');
-                    console.log('[PDF.js] Text layer done: ' + spans.length + ' spans');
+                    console.log("[PDF.js] Text layer done: " + spans.length + " spans");
+                    spans.forEach(function(s, i) {
+                        if (s.textContent.includes("Retriever") || s.textContent.includes("pg") || s.textContent.includes("dist") || s.textContent.includes("rag") || s.textContent.includes("Pg")) {
+                            console.log("[PDF.js Span " + i + "]: \"" + s.textContent + "\"");
+                        }
+                    });
                     if (spans.length > 0) {
                         var s = spans[0];
                         console.log('[PDF.js] First span: "' + s.textContent.trim() +
@@ -1227,80 +1232,126 @@
             }
         }
 
-        // ── Search: overlay-div approach ─────────────────────────────────────────
-        // We NEVER modify span text nodes (no mark insertion).
-        // Instead we use the Range API to get the exact viewport rect of each
-        // matched substring, convert to textLayer local coordinates, and position
-        // a transparent overlay <div> precisely on top of those glyphs.
-        // This eliminates ALL text-shift bugs caused by splitting spans.
+        // ── Search: TreeWalker + Dash/Underscore/Whitespace-Normalized Range API ──
+        // Normalizes all dash, hyphen, minus, and underscore variants (common in LaTeX PDFs)
+        // so queries like "pg_dist_rag", "pg-dist-rag", or multi-line phrases match 100% reliably.
         var _matchMarks  = [];   // overlay <div> elements
         var _matchCursor = -1;
+
+        function normalizeSearchText(str) {
+            if (!str) return '';
+            return str
+                .toLowerCase()
+                .replace(/[_]/g, ' ')
+                .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\u00AD\-]/g, ' ')
+                .replace(/\s+/g, ' ');
+        }
 
         function pdfHighlightAll(query) {
             var textLayer = document.getElementById('pdfTextLayer');
             var countEl   = document.getElementById('pdfMatchCount');
             var dpr       = window.devicePixelRatio || 1;
 
-            // Remove all previous overlays (spans untouched)
+            // Remove all previous overlays
             textLayer.querySelectorAll('.pdf-hl-overlay').forEach(function(el) { el.remove(); });
             _matchMarks  = [];
             _matchCursor = -1;
             if (countEl) { countEl.textContent = ''; countEl.style.fontWeight = 'normal'; countEl.style.color = '#555'; }
-            if (!query) return;
+            
+            var rawQuery = (query || '').trim();
+            if (!rawQuery) return;
 
-            var lower     = query.toLowerCase();
-            var layerRect = textLayer.getBoundingClientRect();
+            var normalizedQuery = normalizeSearchText(rawQuery);
+            if (!normalizedQuery) return;
 
-            textLayer.querySelectorAll('span').forEach(function(span) {
-                if (span.tagName !== 'SPAN') return;
+            // Build char-to-node map for cross-span & multi-line matching
+            var charNodeMap = [];
+            var fullText    = "";
+            var walker      = document.createTreeWalker(textLayer, NodeFilter.SHOW_TEXT, null, false);
+            var node;
+            var prevNode    = null;
 
-                // Always use the original text node (never modified)
-                var textNode = span.firstChild;
-                if (!textNode || textNode.nodeType !== 3 /* TEXT_NODE */) return;
+            while ((node = walker.nextNode())) {
+                var str = node.textContent;
+                if (!str) continue;
 
-                var text = textNode.textContent;
-                var idx  = text.toLowerCase().indexOf(lower);
-
-                while (idx !== -1) {
-                    try {
-                        var range = document.createRange();
-                        range.setStart(textNode, idx);
-                        range.setEnd(textNode, Math.min(idx + query.length, textNode.length));
-                        var r = range.getBoundingClientRect();
-
-                        if (r.width > 0 && r.height > 0) {
-                            // textLayer has transform:scale(1/dpr) origin 0,0
-                            // → convert viewport offset → local textLayer coords by × dpr
-                            var overlay = document.createElement('div');
-                            overlay.className              = 'pdf-hl-overlay pdf-hl';
-                            overlay.style.position        = 'absolute';
-                            overlay.style.left            = ((r.left - layerRect.left) * dpr) + 'px';
-                            overlay.style.top             = ((r.top  - layerRect.top ) * dpr) + 'px';
-                            overlay.style.width           = (r.width  * dpr) + 'px';
-                            overlay.style.height          = (r.height * dpr) + 'px';
-                            overlay.style.pointerEvents   = 'none';
-                            textLayer.appendChild(overlay);
-                            _matchMarks.push(overlay);
-                        }
-                    } catch(e) {
-                        console.warn('[PDF.js] Range highlight error:', e);
+                // Insert space between adjacent text nodes if neither has whitespace at the boundary
+                if (prevNode && fullText.length > 0) {
+                    var lastChar  = fullText[fullText.length - 1];
+                    var firstChar = str[0];
+                    if (!/\s/.test(lastChar) && !/\s/.test(firstChar)) {
+                        charNodeMap.push({ node: prevNode, offset: prevNode.textContent.length });
+                        fullText += ' ';
                     }
-                    idx = text.toLowerCase().indexOf(lower, idx + query.length);
                 }
-            });
+
+                for (var i = 0; i < str.length; i++) {
+                    var ch = str[i];
+                    if (/\s/.test(ch)) {
+                        // Collapse consecutive whitespace
+                        if (fullText.length > 0 && /\s/.test(fullText[fullText.length - 1])) {
+                            continue;
+                        }
+                        ch = ' ';
+                    }
+                    charNodeMap.push({ node: node, offset: i });
+                    fullText += ch;
+                }
+                prevNode = node;
+            }
+
+            if (!fullText) return;
+
+            var lowerFull = normalizeSearchText(fullText);
+            var layerRect = textLayer.getBoundingClientRect();
+            var idx       = lowerFull.indexOf(normalizedQuery);
+
+            while (idx !== -1) {
+                try {
+                    var startPos = charNodeMap[idx];
+                    var endPos   = charNodeMap[idx + normalizedQuery.length - 1];
+
+                    if (startPos && endPos) {
+                        var range = document.createRange();
+                        range.setStart(startPos.node, startPos.offset);
+                        var endOffset = Math.min(endPos.offset + 1, endPos.node.textContent.length);
+                        range.setEnd(endPos.node, endOffset);
+
+                        // Use getClientRects() to handle multiline or multi-span boxes
+                        var rects = range.getClientRects();
+                        for (var rIdx = 0; rIdx < rects.length; rIdx++) {
+                            var r = rects[rIdx];
+                            if (r.width > 0 && r.height > 0) {
+                                var overlay = document.createElement('div');
+                                overlay.className           = 'pdf-hl-overlay pdf-hl';
+                                overlay.style.position      = 'absolute';
+                                overlay.style.left          = ((r.left - layerRect.left) * dpr) + 'px';
+                                overlay.style.top           = ((r.top  - layerRect.top ) * dpr) + 'px';
+                                overlay.style.width         = (r.width  * dpr) + 'px';
+                                overlay.style.height        = (r.height * dpr) + 'px';
+                                overlay.style.pointerEvents = 'none';
+                                textLayer.appendChild(overlay);
+                                _matchMarks.push(overlay);
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.warn('[PDF.js] Range highlight error:', e);
+                }
+                idx = lowerFull.indexOf(normalizedQuery, idx + normalizedQuery.length);
+            }
 
             if (_matchMarks.length === 0) {
                 if (countEl) { countEl.textContent = 'No results'; countEl.style.color = '#dc2626'; countEl.style.fontWeight = '600'; }
-                console.log('[PDF.js] Search "' + query + '": no results');
+                console.log('[PDF.js] Search "' + rawQuery + '": no results');
             } else {
                 _matchCursor = 0;
                 _matchMarks[0].classList.add('pdf-hl-active');
                 _matchMarks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (countEl) { countEl.textContent = '1 of ' + _matchMarks.length; countEl.style.color = '#c2410c'; countEl.style.fontWeight = '600'; }
-                console.log('[PDF.js] Search "' + query + '": ' + _matchMarks.length + ' matches');
+                console.log('[PDF.js] Search "' + rawQuery + '": ' + _matchMarks.length + ' matches found');
             }
         }
-
         function pdfNavMatch(dir) {
             if (_matchMarks.length === 0) return;
             _matchMarks[_matchCursor].classList.remove('pdf-hl-active');
