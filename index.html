@@ -74,60 +74,128 @@
             color      : transparent;
         }
 
-        /* === Search toolbar =================================================== */
+        /* ══ Modern Minimalist Search Toolbar (Spotlight Aesthetic) ═════════ */
         .pdf-search-bar {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 7px 12px;
-            background: #f0f4ff;
-            border: 1px solid #c7d2fe;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+            gap: 8px;
+            padding: 6px 10px 6px 14px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
             width: 100%;
             box-sizing: border-box;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pdf-search-bar:focus-within {
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.14), 0 6px 20px rgba(15, 23, 42, 0.06);
+        }
+        .pdf-search-icon {
+            width: 16px;
+            height: 16px;
+            color: #64748b;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        .pdf-search-bar:focus-within .pdf-search-icon {
+            color: #3b82f6;
         }
         .pdf-search-bar input {
             flex: 1;
-            min-width: 0; /* allows input to shrink on mobile without overflowing buttons */
-            border: 1px solid #a5b4fc;
-            border-radius: 5px;
-            padding: 5px 10px;
-            font-size: 14px;
+            min-width: 0;
+            border: none;
             outline: none;
-            background: #fff;
+            background: transparent;
+            padding: 6px 0;
+            font-size: 14px;
+            font-weight: 450;
+            color: #0f172a;
+            font-family: inherit;
+        }
+        .pdf-search-bar input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .pdf-match-count {
+            font-size: 11px;
+            font-weight: 600;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 9999px;
+            padding: 2px 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.02em;
+            display: none;
+            transition: all 0.15s;
+        }
+        .pdf-match-count:not(:empty) {
+            display: inline-block;
+        }
+        .pdf-nav-btn, .pdf-clear-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .pdf-nav-btn svg, .pdf-clear-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        .pdf-nav-btn:hover, .pdf-clear-btn:hover {
+            background: #f1f5f9;
             color: #1e293b;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
         }
-        .pdf-search-bar input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.18); }
-        .pdf-match-count { font-size:12px; color:#555; min-width:48px; text-align:center; white-space:nowrap; flex-shrink:0; }
-        .pdf-nav-btn,.pdf-clear-btn {
-            background:#fff; border:1px solid #c7d2fe; border-radius:5px;
-            padding:4px 8px; cursor:pointer; font-size:13px; color:#4338ca;
-            line-height:1; transition:background .15s,color .15s; flex-shrink:0;
+        .pdf-nav-btn:active, .pdf-clear-btn:active {
+            transform: translateY(0);
+            background: #e2e8f0;
         }
-        .pdf-nav-btn:hover,.pdf-clear-btn:hover { background:#e0e7ff; }
-        .pdf-search-icon { font-size:15px; flex-shrink:0; }
 
+        /* Responsive scaling */
         @media (max-width: 520px) {
             .pdf-search-bar {
-                padding: 6px 8px;
-                gap: 4px;
+                padding: 5px 8px 5px 10px;
+                gap: 5px;
+                border-radius: 10px;
             }
             .pdf-search-bar input {
-                padding: 4px 6px;
                 font-size: 13px;
+                padding: 4px 0;
             }
             .pdf-match-count {
-                font-size: 11px;
-                min-width: 36px;
+                font-size: 10px;
+                padding: 1px 6px;
             }
             .pdf-nav-btn, .pdf-clear-btn {
-                padding: 3px 6px;
-                font-size: 12px;
+                width: 24px;
+                height: 24px;
+                border-radius: 5px;
+            }
+            .pdf-nav-btn svg, .pdf-clear-btn svg {
+                width: 12px;
+                height: 12px;
             }
         }
-        body {
+
+                body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f8f9fa;
             min-height: 100vh;
@@ -1010,13 +1078,23 @@
         
         <div class="pdf-container" id="pdfContainer" style="display: none;">
             <!-- Search toolbar -->
+            <!-- Search toolbar -->
             <div class="pdf-search-bar" id="pdfSearchBar">
-                <span class="pdf-search-icon">🔍</span>
-                <input type="text" id="pdfSearch" placeholder="Search in resume…" autocomplete="off" />
+                <svg class="pdf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="pdfSearch" placeholder="Search resume… (Press Enter to jump)" autocomplete="off" spellcheck="false" />
                 <span class="pdf-match-count" id="pdfMatchCount"></span>
-                <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match">&#8593;</button>
-                <button class="pdf-nav-btn" onclick="pdfNavMatch(1)"  title="Next match">&#8595;</button>
-                <button class="pdf-clear-btn" onclick="pdfClearSearch()" title="Clear search">&#10005;</button>
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(-1)" title="Previous match (Shift+Enter)" aria-label="Previous match">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                </button>
+                <button class="pdf-nav-btn" onclick="pdfNavMatch(1)" title="Next match (Enter)" aria-label="Next match">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <button class="pdf-clear-btn" onclick="pdfClearSearch()" title="Clear search" aria-label="Clear search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
             <!-- Viewer: canvas + text layer -->
             <div id="pdfViewerWrapper" style="position:relative; display:inline-block; width:100%;">
