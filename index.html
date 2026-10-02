@@ -1297,16 +1297,34 @@
                 display: flex;
                 flex-wrap: wrap;
                 gap: 8px;
-                align-items: stretch;
-                justify-content: initial;
+                align-items: center;
+                justify-content: space-between;
                 padding: 10px;
             }
 
+            /* Row 1: Document View Tabs (50% / 50%) */
             .controls #resumeToggle,
             .controls #letterToggle {
-                flex: 1 1 calc(50% - 24px);
+                flex: 1 1 calc(50% - 4px);
+                width: calc(50% - 4px);
                 min-width: 0;
-                width: auto;
+                box-sizing: border-box;
+            }
+
+            /* Row 2: Portfolio CTA (100% Full Width) */
+            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
+                flex: 1 1 100%;
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+
+            /* Row 3: Action Toolbar (Copy Email + Share + Theme Toggle) */
+            .controls #copyEmailBtn,
+            .controls #shareBtn {
+                flex: 1 1 0;
+                min-width: 0;
+                box-sizing: border-box;
             }
 
             .controls #themeToggle {
@@ -1316,25 +1334,10 @@
                 min-width: 40px;
                 height: 40px;
                 overflow: hidden;
-                clip: auto;
-                clip-path: none;
-                padding: 10px;
-                white-space: normal;
-            }
-
-            .controls > a.portfolio-btn[aria-label="Open Krishna's portfolio"] {
-                flex: 1 1 100%;
-                width: 100%;
-                min-width: 0;
-                box-sizing: border-box;
-            }
-
-            .controls #copyEmailBtn,
-            .controls #shareBtn {
-                flex: 1 1 calc(50% - 4px);
-                width: calc(50% - 4px);
-                min-width: 0;
-                box-sizing: border-box;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .controls .view-toggle,
@@ -1342,8 +1345,9 @@
             .controls #copyEmailBtn,
             .controls #shareBtn {
                 min-height: 40px;
-                padding: 10px 7px;
-                font-size: 12px;
+                padding: 9px 8px;
+                font-size: 12.5px;
+                font-weight: 500;
                 gap: 5px;
                 white-space: nowrap;
                 justify-content: center;
@@ -1357,7 +1361,7 @@
             .controls #shareBtn .icon {
                 width: 15px;
                 height: 15px;
-                flex-basis: 15px;
+                flex: 0 0 15px;
             }
 
             .current-download {
