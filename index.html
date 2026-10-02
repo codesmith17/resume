@@ -19,8 +19,10 @@
     <style>
 
         /* ══ Hover Magnifier Glass (Loupe Lens) ═════════════════════════════ */
-        #pdfViewerWrapper {
-            cursor: zoom-in;
+        #pdfViewerWrapper.pdf-magnifier-active,
+        #pdfViewerWrapper.pdf-magnifier-active *,
+        #pdfViewerWrapper.pdf-magnifier-active #pdfTextLayer span {
+            cursor: zoom-in !important;
         }
         .pdf-magnifier-lens {
             position: absolute !important;
