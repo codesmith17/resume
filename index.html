@@ -246,6 +246,56 @@
             pointer-events: none;
         }
 
+        
+        /* ══ Download Resume Button (Always High-Contrast & Visible) ═════════ */
+        .current-download, .download-btn, .download-btn-fallback {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #1d4ed8 !important;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            min-height: 44px;
+            padding: 10px 22px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+        .current-download:hover, .download-btn:hover, .download-btn-fallback:hover {
+            background: #1d4ed8 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+        }
+        .current-download:active, .download-btn:active, .download-btn-fallback:active {
+            transform: translateY(0);
+        }
+        .current-download .icon, .download-btn .icon, .download-btn-fallback .icon {
+            stroke: #ffffff !important;
+            color: #ffffff !important;
+        }
+
+        [data-theme="dark"] .current-download,
+        [data-theme="dark"] .download-btn,
+        [data-theme="dark"] .download-btn-fallback {
+            background: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+        [data-theme="dark"] .current-download:hover,
+        [data-theme="dark"] .download-btn:hover,
+        [data-theme="dark"] .download-btn-fallback:hover {
+            background: #2563eb !important;
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.5);
+        }
+
         /* ══ Copy Email & Share Button Styles (Theme Aware) ══════════════════ */
         .copy-email-btn, .share-btn {
             background: var(--panel-bg);
