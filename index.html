@@ -2152,7 +2152,45 @@ GitHub: github.com/krishna-yb`;
             }
         });
     
-        // ── Hover Magnifier Glass (Loupe Lens) ──────────────────────────────────
+        // ── Hover & Touch Magnifier Glass (Loupe Lens) ──────────────────────────
+        var isPdfMagnifierActive = false;
+
+        function togglePdfMagnifier() {
+            isPdfMagnifierActive = !isPdfMagnifierActive;
+            var btn = document.getElementById('pdfMagnifierToggle');
+            var wrapper = document.getElementById('pdfViewerWrapper');
+            var lens = document.getElementById('pdfMagnifierLens');
+
+            if (btn) {
+                if (isPdfMagnifierActive) {
+                    btn.classList.add('is-active');
+                    btn.setAttribute('aria-pressed', 'true');
+                    btn.title = "Magnifier active - Click to disable";
+                } else {
+                    btn.classList.remove('is-active');
+                    btn.setAttribute('aria-pressed', 'false');
+                    btn.title = "Click to enable 2x Magnifier Lens";
+                }
+            }
+
+            if (wrapper) {
+                if (isPdfMagnifierActive) {
+                    wrapper.classList.add('pdf-magnifier-active');
+                } else {
+                    wrapper.classList.remove('pdf-magnifier-active');
+                }
+            }
+
+            if (!isPdfMagnifierActive && lens) {
+                lens.style.display = 'none';
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(isPdfMagnifierActive ? '🔍 2x Magnifier Enabled' : '🔍 Magnifier Disabled');
+            }
+        }
+        window.togglePdfMagnifier = togglePdfMagnifier;
+
         function initPdfMagnifier() {
             var wrapper = document.getElementById('pdfViewerWrapper');
             var mainCanvas = document.getElementById('pdfCanvas');
@@ -2171,7 +2209,7 @@ GitHub: github.com/krishna-yb`;
             var lensCanvas = lens.querySelector('canvas');
             var lensCtx = lensCanvas.getContext('2d');
             var zoomRatio = 2.0; // 2x magnification
-            var lensSize = 170;  // 170px lens circle
+            var lensSize = 160;  // 160px lens circle
 
             var dpr = window.devicePixelRatio || 1;
             lensCanvas.width = lensSize * dpr;
@@ -2179,19 +2217,26 @@ GitHub: github.com/krishna-yb`;
             lensCanvas.style.width = lensSize + 'px';
             lensCanvas.style.height = lensSize + 'px';
 
-            function updateLens(e) {
+            function updateLens(clientX, clientY, isTouch) {
+                if (!isPdfMagnifierActive) {
+                    lens.style.display = 'none';
+                    return;
+                }
+
                 try {
                     var rect = wrapper.getBoundingClientRect();
-                    var x = e.clientX - rect.left;
-                    var y = e.clientY - rect.top;
+                    var x = clientX - rect.left;
+                    var y = clientY - rect.top;
 
                     if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
                         lens.style.display = 'none';
                         return;
                     }
 
+                    // On phone touch screens, place lens 45px above finger so finger doesn't obscure text
+                    var offsetY = isTouch ? -45 : 0;
                     lens.style.left = (x - lensSize / 2) + 'px';
-                    lens.style.top = (y - lensSize / 2) + 'px';
+                    lens.style.top = (y - lensSize / 2 + offsetY) + 'px';
                     lens.style.display = 'block';
 
                     var scaleX = mainCanvas.width / rect.width;
@@ -2213,16 +2258,45 @@ GitHub: github.com/krishna-yb`;
                 }
             }
 
-            wrapper.removeEventListener('mousemove', updateLens);
-            wrapper.addEventListener('mousemove', updateLens);
-            wrapper.addEventListener('mouseleave', function() {
+            function handleMouseMove(e) {
+                updateLens(e.clientX, e.clientY, false);
+            }
+
+            function handleMouseLeave() {
                 lens.style.display = 'none';
-            });
-            wrapper.addEventListener('touchstart', function() {
+            }
+
+            function handleTouchMove(e) {
+                if (!isPdfMagnifierActive) return;
+                if (e.touches && e.touches.length > 0) {
+                    var touch = e.touches[0];
+                    updateLens(touch.clientX, touch.clientY, true);
+                    if (e.cancelable) {
+                        e.preventDefault();
+                    }
+                }
+            }
+
+            function handleTouchEnd() {
                 lens.style.display = 'none';
-            }, { passive: true });
+            }
+
+            wrapper.removeEventListener('mousemove', handleMouseMove);
+            wrapper.removeEventListener('mouseleave', handleMouseLeave);
+            wrapper.removeEventListener('touchmove', handleTouchMove);
+            wrapper.removeEventListener('touchstart', handleTouchMove);
+            wrapper.removeEventListener('touchend', handleTouchEnd);
+            wrapper.removeEventListener('touchcancel', handleTouchEnd);
+
+            wrapper.addEventListener('mousemove', handleMouseMove);
+            wrapper.addEventListener('mouseleave', handleMouseLeave);
+            wrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
+            wrapper.addEventListener('touchstart', handleTouchMove, { passive: false });
+            wrapper.addEventListener('touchend', handleTouchEnd);
+            wrapper.addEventListener('touchcancel', handleTouchEnd);
 
             console.log('[PDF.js] Magnifier initialized OK');
+        }
 
         // ── Auto Adjust PDF on Window Resize & Browser Zoom (Ctrl + Scroll) ───────
         var _resizeTimer = null;
@@ -2235,7 +2309,6 @@ GitHub: github.com/krishna-yb`;
                 }
             }, 150);
         });
-        }
 
         // ── Toast Notification System ─────────────────────────────────────────────
         var _toastTimer = null;
