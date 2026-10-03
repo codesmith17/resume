@@ -1655,17 +1655,50 @@
         </div>
     </footer>
 
-    <!-- Modern Floating View Counter Pill (Server-Side IP-Deduplicated Cookieless Counter) -->
-    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time unique page views" style="display: none;">
+    <!-- Modern Floating View Counter Pill -->
+    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time page views" style="display: none;">
         <span class="live-dot" aria-hidden="true"></span>
-        <img src="https://hits.sh/krishna-tripathi.vercel.app.svg?style=flat-square&label=views&color=2563eb" 
-             alt="Unique Views" 
-             class="hits-badge-img" 
-             onload="this.parentNode.style.display='inline-flex'" 
-             onerror="this.parentNode.style.display='none'" />
+        <svg class="icon view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span id="viewCountText"></span>
     </div>
 
     <script>
+        // ── Real-Time Page View Counter ──────────────────────────────────────────
+        async function fetchLivePageViews() {
+            var badgeContainer = document.getElementById('viewCounterBadge');
+            var badgeText = document.getElementById('viewCountText');
+            if (!badgeContainer || !badgeText) return;
+
+            try {
+                var controller = new AbortController();
+                var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
+                var res = await fetch('https://counterapi.com/api/v1/krishnatripathi/resume', { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) return;
+
+                var data = await res.json();
+                var countNum = null;
+
+                if (data && typeof data.value === 'number') {
+                    countNum = data.value;
+                } else if (data && data.formatted) {
+                    countNum = parseInt(data.formatted, 10);
+                }
+
+                if (countNum !== null && !isNaN(countNum) && countNum > 0) {
+                    badgeText.textContent = countNum.toLocaleString() + ' views';
+                    badgeContainer.style.display = 'inline-flex';
+                }
+            } catch (err) {
+                // Safely remain hidden if network fails
+            }
+        }
+        document.addEventListener('DOMContentLoaded', fetchLivePageViews);
+
         document.addEventListener('DOMContentLoaded', function() {
             loadPDF();
         });
