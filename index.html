@@ -1230,6 +1230,12 @@
             flex: 0 0 14px;
             stroke: var(--accent);
         }
+        .hits-badge-img {
+            height: 20px;
+            border-radius: 4px;
+            vertical-align: middle;
+            display: block;
+        }
         .view-counter-badge .live-dot {
             width: 6px;
             height: 6px;
@@ -1649,85 +1655,17 @@
         </div>
     </footer>
 
-    <!-- Modern Floating View Counter Pill (Hidden by default; visible only when live views data is loaded) -->
-    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time page views" style="display: none;">
+    <!-- Modern Floating View Counter Pill (Server-Side IP-Deduplicated Cookieless Counter) -->
+    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time unique page views" style="display: none;">
         <span class="live-dot" aria-hidden="true"></span>
-        <svg class="icon view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-        <span id="viewCountText"></span>
+        <img src="https://hits.sh/krishna-tripathi.vercel.app.svg?style=flat-square&label=views&color=2563eb" 
+             alt="Unique Views" 
+             class="hits-badge-img" 
+             onload="this.parentNode.style.display='inline-flex'" 
+             onerror="this.parentNode.style.display='none'" />
     </div>
 
     <script>
-        // Suppress Adobe PDF Embed API console errors and warnings
-        (function() {
-            const originalError = console.error;
-            const originalWarn = console.warn;
-            
-            console.error = function(...args) {
-                const message = args.join(' ');
-                // Suppress Adobe feature flag errors and warnings
-                if (message.includes('No callback registered by viewer for GET_FEATURE_FLAG') ||
-                    message.includes('setBlockPagesList') ||
-                    message.includes('mobx.array') ||
-                    message.includes('preload but not used') ||
-                    message.includes('rendering worker created')) {
-                    return;
-                }
-                originalError.apply(console, args);
-            };
-            
-            console.warn = function(...args) {
-                const message = args.join(' ');
-                // Suppress Adobe warnings
-                if (message.includes('mobx.array') ||
-                    message.includes('preload but not used') ||
-                    message.includes('The resource') ||
-                    message.includes('acrobatservices.adobe.com')) {
-                    return;
-                }
-                originalWarn.apply(console, args);
-            };
-        })();
-
-        // Global variables
-        
-        // ── Real-Time Page View Counter (CORS-Enabled & 100% Server-Driven) ──────
-        async function fetchLivePageViews() {
-            var badgeContainer = document.getElementById('viewCounterBadge');
-            var badgeText = document.getElementById('viewCountText');
-            if (!badgeContainer || !badgeText) return;
-
-            try {
-                var controller = new AbortController();
-                var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
-                var res = await fetch('https://counterapi.com/api/v1/krishnatripathi/resume', { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!res.ok) return;
-
-                var data = await res.json();
-                var countNum = null;
-
-                if (data && typeof data.value === 'number') {
-                    countNum = data.value;
-                } else if (data && data.formatted) {
-                    countNum = parseInt(data.formatted, 10);
-                } else if (data && data.message) {
-                    countNum = parseInt(data.message, 10);
-                }
-
-                if (countNum !== null && !isNaN(countNum) && countNum > 0) {
-                    badgeText.textContent = countNum.toLocaleString() + ' views';
-                    badgeContainer.style.display = 'inline-flex';
-                }
-            } catch (err) {
-                // If network fails or API is unavailable, badge remains hidden safely
-            }
-        }
-        document.addEventListener('DOMContentLoaded', fetchLivePageViews);
-
         document.addEventListener('DOMContentLoaded', function() {
             loadPDF();
         });
