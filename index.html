@@ -1625,10 +1625,10 @@
         // ── PDF.js: load page, render canvas + text layer + annotation links ──────
         async function loadPDF() {
             const pdfUrl = './KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1';
-            console.log('[PDF.js] loadPDF() called');
+            
             try {
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-                console.log('[PDF.js] PDF loaded, pages:', pdf.numPages);
+                
                 window._pdfDoc = pdf;
 
                 const canvas    = document.getElementById('pdfCanvas');
@@ -1652,12 +1652,7 @@
                 const cssW            = Math.floor(viewport.width  / dpr);
                 const cssH            = Math.floor(viewport.height / dpr);
 
-                console.log('[PDF.js] containerWidth=' + containerWidth +
-                            ' naturalW=' + naturalViewport.width.toFixed(1) +
-                            ' scale=' + scale.toFixed(3) +
-                            ' dpr=' + dpr +
-                            ' canvas=' + viewport.width + 'x' + viewport.height +
-                            ' css=' + cssW + 'x' + cssH);
+                
 
                 // Set canvas pixel dimensions (actual render size)
                 canvas.width        = viewport.width;
@@ -1669,7 +1664,7 @@
                 canvas.style.pointerEvents = 'none';
 
                 await page.render({ canvasContext: ctx, viewport }).promise; initPdfMagnifier();
-                console.log('[PDF.js] Canvas rendered');
+                
 
                 // Text layer: same pixel-space as canvas, scaled down via transform
                 textLayer.innerHTML = '';
@@ -1686,24 +1681,11 @@
                     textDivs: []
                 });
 
-                setTimeout(function() {
-                    var spans = textLayer.querySelectorAll('span');
-                    console.log("[PDF.js] Text layer done: " + spans.length + " spans");
-                    spans.forEach(function(s, i) {
-                        if (s.textContent.includes("Retriever") || s.textContent.includes("pg") || s.textContent.includes("dist") || s.textContent.includes("rag") || s.textContent.includes("Pg")) {
-                            console.log("[PDF.js Span " + i + "]: \"" + s.textContent + "\"");
-                        }
-                    });
-                    if (spans.length > 0) {
-                        var s = spans[0];
-                        console.log('[PDF.js] First span: "' + s.textContent.trim() +
-                                    '" top=' + s.style.top + ' left=' + s.style.left);
-                    }
-                }, 400);
+                
 
                 // Annotation layer: URL links open in new tab
                 const annotations = await page.getAnnotations();
-                console.log('[PDF.js] Annotations found:', annotations.length);
+                
                 annotations.forEach(function(ann) {
                     if (ann.subtype === 'Link' && ann.url) {
                         var r   = ann.rect;
@@ -1858,13 +1840,13 @@
 
             if (_matchMarks.length === 0) {
                 if (countEl) { countEl.textContent = 'No results'; countEl.style.color = '#dc2626'; countEl.style.fontWeight = '600'; }
-                console.log('[PDF.js] Search "' + rawQuery + '": no results');
+                
             } else {
                 _matchCursor = 0;
                 _matchMarks[0].classList.add('pdf-hl-active');
                 _matchMarks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (countEl) { countEl.textContent = '1 of ' + _matchMarks.length; countEl.style.color = '#c2410c'; countEl.style.fontWeight = '600'; }
-                console.log('[PDF.js] Search "' + rawQuery + '": ' + _matchMarks.length + ' matches found');
+                
             }
         }
         function pdfNavMatch(dir) {
@@ -2294,7 +2276,7 @@ GitHub: github.com/krishna-yb`;
             wrapper.addEventListener('touchend', handleTouchEnd);
             wrapper.addEventListener('touchcancel', handleTouchEnd);
 
-            console.log('[PDF.js] Magnifier initialized OK');
+            
         }
 
         // ── Auto Adjust PDF on Window Resize & Browser Zoom (Ctrl + Scroll) ───────
@@ -2303,7 +2285,7 @@ GitHub: github.com/krishna-yb`;
             if (_resizeTimer) clearTimeout(_resizeTimer);
             _resizeTimer = setTimeout(function() {
                 if (window._pdfDoc) {
-                    console.log('[PDF.js] Browser zoom/resize -> auto adjusting PDF to container');
+                    
                     loadPDF();
                 }
             }, 150);
