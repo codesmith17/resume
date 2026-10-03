@@ -1207,15 +1207,16 @@
         .controls .download-btn > span { display: none; }
         .controls #downloadBtn, .controls .cover-letter-btn { display: none; }
         .download-bar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 12px 0; display: flex; justify-content: center; }
+        .footer-view-counter-wrapper {
+            margin: 12px 0 8px;
+            display: flex;
+            justify-content: center;
+        }
         .view-counter-badge {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 999;
             display: none;
             align-items: center;
             gap: 7px;
-            padding: 7px 14px;
+            padding: 6px 14px;
             background: var(--panel-bg);
             border: 1px solid var(--line);
             border-radius: 9999px;
@@ -1224,16 +1225,14 @@
             font-weight: 600;
             letter-spacing: 0.2px;
             white-space: nowrap;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
             user-select: none;
             cursor: default;
         }
         .view-counter-badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border-color: var(--accent);
         }
         .view-counter-badge .view-icon {
@@ -1241,12 +1240,6 @@
             height: 14px;
             flex: 0 0 14px;
             stroke: var(--accent);
-        }
-        .hits-badge-img {
-            height: 20px;
-            border-radius: 4px;
-            vertical-align: middle;
-            display: block;
         }
         .view-counter-badge .live-dot {
             width: 6px;
@@ -1266,15 +1259,7 @@
             background: rgba(30, 41, 59, 0.88);
             border-color: var(--line);
             color: var(--text);
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
-        }
-        @media (max-width: 768px) {
-            .view-counter-badge {
-                bottom: 74px;
-                right: 14px;
-                padding: 6px 12px;
-                font-size: 11.5px;
-            }
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
         }
         .current-download { background: var(--accent); border: 1px solid var(--accent); border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; }
         .current-download:hover { filter: brightness(0.94); }
@@ -1632,6 +1617,16 @@
                 <h3>Krishna Tripathi</h3>
                 <p>Software Engineer • Available for opportunities</p>
                 <p>Let's connect and discuss exciting opportunities</p>
+                <div class="footer-view-counter-wrapper">
+                    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time page views" style="display: none;">
+                        <span class="live-dot" aria-hidden="true"></span>
+                        <svg class="icon view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span id="viewCountText"></span>
+                    </div>
+                </div>
                 <div class="cute-illustration" title="Hire me!">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M25 40H75C80.5228 40 85 44.4772 85 50V75C85 80.5228 80.5228 85 75 85H25C19.4772 85 15 80.5228 15 75V50C15 44.4772 19.4772 40 25 40Z" fill="#FACC15" stroke="#EAB308" stroke-width="4"/>
@@ -1666,16 +1661,6 @@
             </div>
         </div>
     </footer>
-
-    <!-- Modern Floating View Counter Pill -->
-    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time page views" style="display: none;">
-        <span class="live-dot" aria-hidden="true"></span>
-        <svg class="icon view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-        <span id="viewCountText"></span>
-    </div>
 
     <script>
         // ── Real-Time Page View Counter ──────────────────────────────────────────
