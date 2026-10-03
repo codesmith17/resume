@@ -1195,6 +1195,69 @@
         .controls .download-btn > span { display: none; }
         .controls #downloadBtn, .controls .cover-letter-btn { display: none; }
         .download-bar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 20px; padding: 12px 0; display: flex; justify-content: center; }
+        .view-counter-badge {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 9999px;
+            color: var(--text);
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            user-select: none;
+            cursor: default;
+        }
+        .view-counter-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            border-color: var(--accent);
+        }
+        .view-counter-badge .view-icon {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 14px;
+            stroke: var(--accent);
+        }
+        .view-counter-badge .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite ease-in-out;
+            flex: 0 0 6px;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        [data-theme="dark"] .view-counter-badge {
+            background: rgba(30, 41, 59, 0.88);
+            border-color: var(--line);
+            color: var(--text);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+        }
+        @media (max-width: 768px) {
+            .view-counter-badge {
+                bottom: 74px;
+                right: 14px;
+                padding: 6px 12px;
+                font-size: 11.5px;
+            }
+        }
         .current-download { background: var(--accent); border: 1px solid var(--accent); border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; }
         .current-download:hover { filter: brightness(0.94); }
 
@@ -1586,6 +1649,16 @@
         </div>
     </footer>
 
+    <!-- Modern Floating View Counter Pill (Hidden by default; visible only when live views data is loaded) -->
+    <div class="view-counter-badge" id="viewCounterBadge" title="Real-time page views" style="display: none;">
+        <span class="live-dot" aria-hidden="true"></span>
+        <svg class="icon view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span id="viewCountText"></span>
+    </div>
+
     <script>
         // Suppress Adobe PDF Embed API console errors and warnings
         (function() {
@@ -1619,6 +1692,42 @@
         })();
 
         // Global variables
+        
+        // ── Real-Time Page View Counter (CORS-Enabled & 100% Server-Driven) ──────
+        async function fetchLivePageViews() {
+            var badgeContainer = document.getElementById('viewCounterBadge');
+            var badgeText = document.getElementById('viewCountText');
+            if (!badgeContainer || !badgeText) return;
+
+            try {
+                var controller = new AbortController();
+                var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
+                var res = await fetch('https://counterapi.com/api/v1/krishnatripathi/resume', { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) return;
+
+                var data = await res.json();
+                var countNum = null;
+
+                if (data && typeof data.value === 'number') {
+                    countNum = data.value;
+                } else if (data && data.formatted) {
+                    countNum = parseInt(data.formatted, 10);
+                } else if (data && data.message) {
+                    countNum = parseInt(data.message, 10);
+                }
+
+                if (countNum !== null && !isNaN(countNum) && countNum > 0) {
+                    badgeText.textContent = countNum.toLocaleString() + ' views';
+                    badgeContainer.style.display = 'inline-flex';
+                }
+            } catch (err) {
+                // If network fails or API is unavailable, badge remains hidden safely
+            }
+        }
+        document.addEventListener('DOMContentLoaded', fetchLivePageViews);
+
         document.addEventListener('DOMContentLoaded', function() {
             loadPDF();
         });
