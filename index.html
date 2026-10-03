@@ -957,15 +957,23 @@
             }
 
             .footer-links {
-                gap: 15px;
-                flex-direction: column;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
             }
 
             .footer-links a {
                 font-size: 13px;
-                padding: 10px 20px;
-                width: 200px;
+                padding: 8px 14px;
+                width: auto;
+                max-width: max-content;
                 justify-content: center;
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
             }
 
             .social-icon {
@@ -993,10 +1001,14 @@
                     padding: 15px 0;
                 }
 
+                .footer-links {
+                    gap: 8px;
+                }
+
                 .footer-links a {
-                    width: 180px;
-                    font-size: 12px;
-                    padding: 8px 16px;
+                    width: auto;
+                    font-size: 11.5px;
+                    padding: 6px 10px;
                 }
 
                 .footer-info h3 {
