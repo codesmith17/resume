@@ -1511,11 +1511,11 @@
                 <h3>📄 Resume Preview</h3>
                 <p>Click the button below to view or download the resume:</p>
                 <div class="fallback-buttons">
-                    <a href="./resume.pdf?v=20260929-1" target="_blank" class="view-btn">
+                    <a href="./KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1" download="KRISHNA_TRIPATHI_RESUME.pdf" target="_blank" class="view-btn">
                         <span>👀</span>
                         View in New Tab
                     </a>
-                    <button class="download-btn-fallback" onclick="downloadCurrent()">
+                    <button class="download-btn-fallback" onclick="downloadPDF()">
                         <span>📥</span>
                         Download resume
                     </button>
@@ -1624,7 +1624,7 @@
         });
         // ── PDF.js: load page, render canvas + text layer + annotation links ──────
         async function loadPDF() {
-            const pdfUrl = './resume.pdf?v=20260929-1';
+            const pdfUrl = './KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1';
             console.log('[PDF.js] loadPDF() called');
             try {
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -1892,7 +1892,7 @@
             try {
                 // Create a temporary link to trigger download
                 const link = document.createElement('a');
-                link.href = './resume.pdf?v=20260929-1';
+                link.href = './KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1';
                 link.download = 'KRISHNA_TRIPATHI_RESUME.pdf';
                 link.style.display = 'none';
                 
@@ -1903,7 +1903,7 @@
             } catch (error) {
                 console.warn('⚠️ Download failed:', error);
                 // Fallback: open in new tab
-                window.open('./resume.pdf?v=20260929-1', '_blank');
+                window.open('./KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1', '_blank');
             }
         }
 
@@ -1938,7 +1938,7 @@
                 // Get the current URL to determine the correct PDF URL
                 const currentURL = window.location.href;
                 const baseURL = currentURL.substring(0, currentURL.lastIndexOf('/') + 1);
-                const pdfURL = baseURL + 'resume.pdf?v=20260929-1';
+                const pdfURL = baseURL + 'KRISHNA_TRIPATHI_RESUME.pdf?v=20261003-1';
                 
                                  // Your Adobe PDF Embed API client ID
                  const CLIENT_ID = "795f1660c3da406a8bc7f91f56e1e819";
