@@ -11,12 +11,12 @@
     <link rel="shortcut icon" href="./favicon.png?v=20261002-3">
     <link rel="apple-touch-icon" href="./favicon.png?v=20261002-3">
     
-    <!-- Adobe PDF Embed API for professional PDF viewing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-    <!-- pdf.worker loaded internally by PDF.js via workerSrc below -->
+    <!-- Local PDF.js & pdf-lib for 100% offline capability -->
+    <script src="./pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.worker.min.js";
     </script>
+    <script src="./pdf-lib.min.js"></script>
 
     <style>
 
@@ -1601,11 +1601,11 @@
             </header>
             <div class="letter-date" id="letterDate">October 3, 2026</div>
             <p>Dear Hiring Manager,</p>
-            <p>I am excited to apply for the Software Engineer opportunities at Atlassian. I have experience building and contributing to production software across backend services, distributed systems, databases, cloud infrastructure, AI-powered applications, and developer tooling.</p>
-            <p>At Yugabyte, I have worked extensively on Meko, an AI agentic-memory and knowledge-base platform, contributing across Go, Python, React, AWS, and MCP. I built the Meko web application and the knowledge-base upload pipeline, including a presigned S3 upload flow with storage-level file size and type validation. I also worked on knowledge-base ingestion, content deduplication, live upload status, and UUID-based APIs, helping make the platform more reliable and scalable.</p>
-            <p>I have also built features around authentication and AI observability. I implemented Google, LinkedIn, and GitHub sign-in through AWS Cognito, including federated identity linking and profile completion. For Meko's AI workflows, I developed decision-tracing and retrieval observability that allows individual retrieval hits, queries, memories, and knowledge-base sources used during an AI response to be inspected. I also contributed to the Meko MCP server, enabling AI agents to interact with knowledge-base operations.</p>
+            <p>I am excited to apply for a software engineering opportunity. I have experience building and contributing to production software across backend services, distributed systems, databases, cloud infrastructure, AI-powered applications, and developer tooling.</p>
+            <p>At Yugabyte, I have worked extensively on Meko, an AI agentic-memory and knowledge-base platform, contributing across Go, Python, React, AWS, and MCP. I built the Meko web application and knowledge-base upload pipeline, including presigned S3 uploads with storage-level file-size and type validation. I also worked on knowledge-base ingestion, content deduplication, live upload status, and UUID-based APIs, helping make the platform more reliable and scalable.</p>
+            <p>I have also built features for authentication and AI observability. I implemented Google, LinkedIn, and GitHub sign-in through AWS Cognito, including federated identity linking and profile completion. For Meko's AI workflows, I developed decision tracing and retrieval observability so individual retrieval hits, queries, memories, and knowledge-base sources used in an AI response can be inspected. I also contributed to the Meko MCP server, enabling AI agents to interact with knowledge-base operations.</p>
             <p>Beyond Meko, I have contributed to YugabyteDB and open-source projects including LangChain4j, yb-voyager, and node-postgres. My work includes YugabyteDB embedding-store integration, a distributed RAG retriever, database migration tooling, smart-driver work, CI infrastructure, observability, and developer-facing documentation. These contributions have given me experience working across large production codebases and collaborating on software used beyond my immediate team.</p>
-            <p>I am particularly interested in Atlassian's engineering work at the intersection of cloud, AI, and collaboration at scale. I would welcome the opportunity to bring my experience in backend engineering, distributed systems, cloud infrastructure, and AI-powered applications to the team and contribute to reliable software used by millions of customers.</p>
+            <p>I am particularly interested in engineering work at the intersection of cloud, AI, and collaboration at scale. I would welcome the opportunity to bring my experience in backend engineering, distributed systems, cloud infrastructure, and AI-powered applications to your team and contribute to reliable, impactful software.</p>
             <p class="letter-signature">Best regards,<br><strong>Krishna Tripathi</strong><br>GitHub: github.com/krishna-yb</p>
         </article>
     </div>
@@ -2139,33 +2139,88 @@ ${todayFormatted}
 
 Dear Hiring Manager,
 
-I am excited to apply for the Software Engineer opportunities at Atlassian. I have experience building and contributing to production software across backend services, distributed systems, databases, cloud infrastructure, AI-powered applications, and developer tooling.
+I am excited to apply for a software engineering opportunity. I have experience building and contributing to production software across backend services, distributed systems, databases, cloud infrastructure, AI-powered applications, and developer tooling.
 
-At Yugabyte, I have worked extensively on Meko, an AI agentic-memory and knowledge-base platform, contributing across Go, Python, React, AWS, and MCP. I built the Meko web application and the knowledge-base upload pipeline, including a presigned S3 upload flow with storage-level file size and type validation. I also worked on knowledge-base ingestion, content deduplication, live upload status, and UUID-based APIs, helping make the platform more reliable and scalable.
+At Yugabyte, I have worked extensively on Meko, an AI agentic-memory and knowledge-base platform, contributing across Go, Python, React, AWS, and MCP. I built the Meko web application and knowledge-base upload pipeline, including presigned S3 uploads with storage-level file-size and type validation. I also worked on knowledge-base ingestion, content deduplication, live upload status, and UUID-based APIs, helping make the platform more reliable and scalable.
 
-I have also built features around authentication and AI observability. I implemented Google, LinkedIn, and GitHub sign-in through AWS Cognito, including federated identity linking and profile completion. For Meko's AI workflows, I developed decision-tracing and retrieval observability that allows individual retrieval hits, queries, memories, and knowledge-base sources used during an AI response to be inspected. I also contributed to the Meko MCP server, enabling AI agents to interact with knowledge-base operations.
+I have also built features for authentication and AI observability. I implemented Google, LinkedIn, and GitHub sign-in through AWS Cognito, including federated identity linking and profile completion. For Meko's AI workflows, I developed decision tracing and retrieval observability so individual retrieval hits, queries, memories, and knowledge-base sources used in an AI response can be inspected. I also contributed to the Meko MCP server, enabling AI agents to interact with knowledge-base operations.
 
 Beyond Meko, I have contributed to YugabyteDB and open-source projects including LangChain4j, yb-voyager, and node-postgres. My work includes YugabyteDB embedding-store integration, a distributed RAG retriever, database migration tooling, smart-driver work, CI infrastructure, observability, and developer-facing documentation. These contributions have given me experience working across large production codebases and collaborating on software used beyond my immediate team.
 
-I am particularly interested in Atlassian's engineering work at the intersection of cloud, AI, and collaboration at scale. I would welcome the opportunity to bring my experience in backend engineering, distributed systems, cloud infrastructure, and AI-powered applications to the team and contribute to reliable software used by millions of customers.
+I am particularly interested in engineering work at the intersection of cloud, AI, and collaboration at scale. I would welcome the opportunity to bring my experience in backend engineering, distributed systems, cloud infrastructure, and AI-powered applications to your team and contribute to reliable, impactful software.
 
 Best regards,
 Krishna Tripathi
 GitHub: github.com/krishna-yb`;
         }
 
-        // Download cover letter with today's date embedded in filename + content
-        function downloadCoverLetter() {
-            const blob = new Blob([buildCoverLetter()], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'KRISHNA_TRIPATHI_COVER_LETTER.txt';
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+        // Download cover letter with today's date embedded in PDF
+        async function downloadCoverLetter() {
+            const fileName = 'KRISHNA_TRIPATHI_COVER_LETTER.pdf';
+            try {
+                if (typeof showToast === 'function') {
+                    showToast('📄 Generating PDF Cover Letter...');
+                }
+
+                if (typeof PDFLib === 'undefined') {
+                    await new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        s.src = './pdf-lib.min.js';
+                        s.onload = resolve;
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                const response = await fetch('./cover-letter.pdf');
+                if (!response.ok) throw new Error('Failed to load cover-letter.pdf template');
+                const pdfBytes = await response.arrayBuffer();
+
+                const { PDFDocument, rgb, StandardFonts } = PDFLib;
+                const pdfDoc = await PDFDocument.load(pdfBytes);
+                const firstPage = pdfDoc.getPages()[0];
+
+                // Cover the existing date with a white rectangle
+                firstPage.drawRectangle({
+                    x: 60,
+                    y: 594,
+                    width: 170,
+                    height: 18,
+                    color: rgb(1, 1, 1),
+                });
+
+                // Overlay the dynamic today's date
+                const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                firstPage.drawText(todayFormatted, {
+                    x: 61.2,
+                    y: 598.6,
+                    size: 10.9,
+                    font: font,
+                    color: rgb(0, 0, 0),
+                });
+
+                const modifiedBytes = await pdfDoc.save();
+                const blob = new Blob([modifiedBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                if (typeof showToast === 'function') {
+                    showToast('✅ Downloaded PDF Cover Letter');
+                }
+            } catch (err) {
+                console.error('Error generating PDF cover letter:', err);
+                const link = document.createElement('a');
+                link.href = './cover-letter.pdf';
+                link.download = fileName;
+                link.click();
+            }
         }
 
         const coverLetterDownloadBtn = document.getElementById('coverLetterDownloadBtn');
