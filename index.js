@@ -11,6 +11,11 @@ const port = process.env.PORT || 3000;
 // Enable CORS for all origins
 app.use(cors());
 app.use(express.json());
+
+// Modular analytics & view tracking routes
+const analyticsRoutes = require('./api/analytics/routes');
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/views', analyticsRoutes);
 app.use(express.static('public'));
 
 // Development mode detection

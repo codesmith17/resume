@@ -11,6 +11,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Modular analytics & view tracking routes
+const analyticsRoutes = require('./analytics/routes');
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/views', analyticsRoutes);
+
 // Development mode detection
 const isDevelopment = !process.env.GOOGLE_CREDENTIALS || process.env.NODE_ENV === 'development';
 
