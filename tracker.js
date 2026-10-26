@@ -1,78 +1,188 @@
 /**
- * Resume Visitor Telemetry & Analytics Client.
- * Features:
- * - Granular device & hardware identification (iPhone, Mac, Android brands like Motorola/Moto, Samsung, Pixel)
- * - Hardware Canvas, WebGL, and AudioContext fingerprinting for robust incognito deduplication
- * - Every page load and reload records an event (double count on reload)
- * - Dedicated session & unique visitor tracking
- * - Live views badge with interactive telemetry popover
+ * Hardened Visitor Telemetry & Analytics Client.
+ *
+ * Architecture:
+ * 1. FingerprintJS v5.3.0 Engine:
+ *    Loads official FingerprintJS agent, extracting 17+ core entropy sources
+ *    (canvas, audio, screenFrame, fonts, math, domBlockers, timezone, etc.).
+ * 2. Hardened Multi-Layer Extractor (Complementary & Ad-Block Resilient):
+ *    - WebGL Unmasked GPU Renderer & Shader Precision (ANGLE / Apple / Adreno / Mali / Intel)
+ *    - User-Agent Client Hints High Entropy (exact hardware model e.g. moto g84 5G, Pixel, Galaxy)
+ *    - AudioContext DynamicsCompressor oscillator frequency buffer
+ *    - Math floating-point IEEE-754 transcendental function quirks (acos, sinh, tanh, expm1)
+ *    - Canvas 2D multi-script, emoji, font winding & subpixel rasterization
+ *    - Screen frame & device pixel ratio
+ *    - Incognito / Private mode heuristic detection
+ * 3. Double-counting on reload:
+ *    Every page load generates a fresh event_id UUID so page views increment on every visit/reload.
+ * 4. Incognito-Resilient Deduplication:
+ *    Composite visitor identifier combines FingerprintJS hash + GPU hardware renderer +
+ *    audio oscillator + screen frame. It remains identical across regular and incognito tabs!
  */
-(function() {
+
+(function () {
   'use strict';
 
-  // Simple, fast SHA-256 in browser using SubtleCrypto with fallback
+  // Fast SHA-256 in browser using Web Crypto API with fallback
   async function sha256(str) {
     if (window.crypto && window.crypto.subtle && window.TextEncoder) {
-      const buffer = new TextEncoder().encode(str);
-      const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
+      try {
+        const buffer = new TextEncoder().encode(str);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(hashBuffer))
+          .map(function (b) { return b.toString(16).padStart(2, '0'); })
+          .join('');
+      } catch (_) {}
     }
     // FNV-1a 32-bit fallback
-    let hash = 2166136261;
-    for (let i = 0; i < str.length; i++) {
+    var hash = 2166136261;
+    for (var i = 0; i < str.length; i++) {
       hash ^= str.charCodeAt(i);
       hash = Math.imul(hash, 16777619);
     }
     return (hash >>> 0).toString(16);
   }
 
-  // 1. Canvas Fingerprint
-  function getCanvasFp() {
+  // --- ENTROPY SOURCE 1: WebGL Unmasked GPU Renderer & Context ---
+  function getWebGLFingerprint() {
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 200;
-      canvas.height = 50;
-      const ctx = canvas.getContext('2d');
+      var canvas = document.createElement('canvas');
+      var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) return { supported: false };
+
+      var ext = gl.getExtension('WEBGL_debug_renderer_info');
+      var vendor = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+      var renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+
+      // Extract shader precision metrics
+      var vShaderPrec = gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT);
+      var fShaderPrec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+
+      return {
+        supported: true,
+        vendor: String(vendor || ''),
+        renderer: String(renderer || ''),
+        vShader: vShaderPrec ? [vShaderPrec.rangeMin, vShaderPrec.rangeMax, vShaderPrec.precision].join(',') : '',
+        fShader: fShaderPrec ? [fShaderPrec.rangeMin, fShaderPrec.rangeMax, fShaderPrec.precision].join(',') : '',
+      };
+    } catch (_) {
+      return { supported: false, error: true };
+    }
+  }
+
+  // --- ENTROPY SOURCE 2: Canvas 2D Text, Winding & Subpixel Geometry ---
+  function getCanvasFingerprint() {
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = 240;
+      canvas.height = 60;
+      var ctx = canvas.getContext('2d');
       if (!ctx) return 'no-canvas';
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial, sans-serif';
+
+      // 1. Text with diverse unicode scripts and emojis
+      ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#f60';
       ctx.fillRect(125, 1, 62, 20);
+
       ctx.fillStyle = '#069';
-      ctx.fillText('Krishna Resume <canvas> 1.0', 2, 15);
+      ctx.font = '11pt no-real-font-123, Arial';
+      ctx.fillText('Krishna Resume Telemetry, \ud83d\ude03 \ud83c\udff3\ufe0f\u200d\ud83c\udf08', 2, 15);
+
       ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-      ctx.fillText('Krishna Resume <canvas> 1.0', 4, 17);
+      ctx.font = '18pt Arial';
+      ctx.fillText('Krishna Resume Telemetry, \ud83d\ude03 \ud83c\udff3\ufe0f\u200d\ud83c\udf08', 4, 45);
+
+      // 2. Geometry winding rules
+      ctx.beginPath();
+      ctx.arc(50, 50, 50, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.rect(100, 10, 10, 10);
+      ctx.fill('evenodd');
+
       return canvas.toDataURL();
     } catch (_) {
       return 'canvas-err';
     }
   }
 
-  // 2. WebGL Fingerprint
-  function getWebGLFp() {
+  // --- ENTROPY SOURCE 3: OfflineAudioContext Oscillator & Compressor ---
+  async function getAudioFingerprint() {
+    return new Promise(function (resolve) {
+      try {
+        var AudioCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!AudioCtx) return resolve('no-audio-api');
+
+        var context = new AudioCtx(1, 44100, 44100);
+        var oscillator = context.createOscillator();
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(10000, context.currentTime);
+
+        var compressor = context.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-50, context.currentTime);
+        compressor.knee.setValueAtTime(40, context.currentTime);
+        compressor.ratio.setValueAtTime(12, context.currentTime);
+        compressor.reduction.setValueAtTime(-20, context.currentTime);
+        compressor.attack.setValueAtTime(0, context.currentTime);
+        compressor.release.setValueAtTime(0.25, context.currentTime);
+
+        oscillator.connect(compressor);
+        compressor.connect(context.destination);
+        oscillator.start(0);
+
+        context.oncomplete = function (event) {
+          try {
+            var samples = event.renderedBuffer.getChannelData(0);
+            var sum = 0;
+            for (var i = 4500; i < 5000; i++) {
+              sum += Math.abs(samples[i]);
+            }
+            resolve(String(sum));
+          } catch (_) {
+            resolve('audio-render-err');
+          }
+        };
+
+        context.startRendering().catch(function () {
+          resolve('audio-timeout');
+        });
+      } catch (_) {
+        resolve('audio-err');
+      }
+    });
+  }
+
+  // --- ENTROPY SOURCE 4: Math Transcendental Function IEEE-754 Precision ---
+  function getMathFingerprint() {
     try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) return 'no-webgl';
-      const ext = gl.getExtension('WEBGL_debug_renderer_info');
-      if (!ext) return 'webgl-no-ext';
-      const vendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || '';
-      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
-      return `${vendor}~${renderer}`;
+      return [
+        Math.acos(0.123124234234234242),
+        Math.acosh(1e308),
+        Math.asin(0.123124234234234242),
+        Math.asinh(1),
+        Math.atanh(0.5),
+        Math.atan(2),
+        Math.sin(-1e300),
+        Math.sinh(1),
+        Math.cos(21 * Math.LN2),
+        Math.cosh(1),
+        Math.tan(-1e300),
+        Math.tanh(1),
+        Math.exp(1),
+        Math.expm1(1),
+        Math.log1p(10),
+      ].join(';');
     } catch (_) {
-      return 'webgl-err';
+      return 'math-err';
     }
   }
 
-  // 3. Detect Incognito / Private Window
+  // --- ENTROPY SOURCE 5: Incognito / Private Window Heuristics ---
   async function detectIncognito() {
     try {
-      if ('storage' in navigator && 'estimate' in navigator.storage) {
-        const { quota } = await navigator.storage.estimate();
-        // Chromium incognito typically limits quota to ~120MB or a fraction of disk
-        if (quota && quota < 130 * 1024 * 1024) {
+      // Chromium private browsing limits storage quota drastically
+      if (navigator.storage && navigator.storage.estimate) {
+        var estimate = await navigator.storage.estimate();
+        if (estimate.quota && estimate.quota < 130 * 1024 * 1024) {
           return true;
         }
       }
@@ -80,9 +190,9 @@
     return false;
   }
 
-  // 4. Client Hints (Extracts exact Motorola, Samsung, Pixel models on Chromium/Android)
+  // --- ENTROPY SOURCE 6: User-Agent Client Hints High Entropy (Motorola, Samsung, Pixel) ---
   async function getClientHints() {
-    const hints = {
+    var hints = {
       mobile: /Mobi|Android/i.test(navigator.userAgent),
       maxTouchPoints: navigator.maxTouchPoints || 0,
       platform: navigator.platform || '',
@@ -91,26 +201,31 @@
 
     if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
       try {
-        const highEntropy = await navigator.userAgentData.getHighEntropyValues([
+        var highEntropy = await navigator.userAgentData.getHighEntropyValues([
           'model',
           'platform',
           'platformVersion',
           'architecture',
+          'bitness',
         ]);
         if (highEntropy.model) hints.model = highEntropy.model;
         if (highEntropy.platform) hints.platform = highEntropy.platform;
+        if (highEntropy.platformVersion) hints.platformVersion = highEntropy.platformVersion;
+        if (highEntropy.architecture) hints.architecture = highEntropy.architecture;
       } catch (_) {}
     }
     return hints;
   }
 
-  // Generate or retrieve persistent visitor ID & session ID
+  // Session & Local Storage persistence
   function getOrSetStorage(key, isSession) {
-    const storage = isSession ? window.sessionStorage : window.localStorage;
+    var storage = isSession ? window.sessionStorage : window.localStorage;
     try {
-      let val = storage.getItem(key);
+      var val = storage.getItem(key);
       if (!val) {
-        val = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('id_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
+        val = (window.crypto && window.crypto.randomUUID)
+          ? window.crypto.randomUUID()
+          : ('id_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
         storage.setItem(key, val);
       }
       return val;
@@ -119,9 +234,9 @@
     }
   }
 
-  // Extract query parameters (e.g. ?email=... &utm_source=...)
+  // Query parameters (e.g. ?email=... &utm_source=...)
   function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
+    var params = new URLSearchParams(window.location.search);
     return {
       email: params.get('email') || params.get('e') || params.get('contact') || '',
       utmSource: params.get('utm_source') || '',
@@ -130,56 +245,93 @@
     };
   }
 
-  // Main Tracking Execution
-  async function initTracker() {
-    const queryParams = getQueryParams();
-    const clientHints = await getClientHints();
-    const isIncognito = await detectIncognito();
+  // --- Master Fingerprint Aggregator ---
+  async function extractVisitorFingerprint() {
+    var fpVisitorId = null;
+    var fpComponents = null;
 
-    const canvasHash = await sha256(getCanvasFp());
-    const webglFp = getWebGLFp();
+    // 1. Run official FingerprintJS v5.3.0 if loaded
+    if (window.FingerprintJS && typeof window.FingerprintJS.load === 'function') {
+      try {
+        var fpAgent = await window.FingerprintJS.load();
+        var fpResult = await fpAgent.get();
+        if (fpResult && fpResult.visitorId) {
+          fpVisitorId = fpResult.visitorId;
+          fpComponents = fpResult.components;
+        }
+      } catch (err) {
+        console.warn('[telemetry] FingerprintJS error, falling back to hardened engine:', err);
+      }
+    }
 
-    // Composite client fingerprint: combines hardware renderer, screen, timezone, platform
-    const rawFpString = [
+    // 2. Run complementary hardened entropy sources
+    var webglData = getWebGLFingerprint();
+    var canvasData = getCanvasFingerprint();
+    var audioData = await getAudioFingerprint();
+    var mathData = getMathFingerprint();
+    var clientHints = await getClientHints();
+    var isIncognito = await detectIncognito();
+
+    // 3. Composite hardware signature
+    var canvasHash = await sha256(canvasData);
+    var hardwareVector = [
+      fpVisitorId || 'no-fpjs',
+      webglData.vendor,
+      webglData.renderer,
+      webglData.vShader,
+      webglData.fShader,
       canvasHash,
-      webglFp,
+      audioData,
+      mathData,
       screen.width,
       screen.height,
+      screen.availWidth,
+      screen.availHeight,
       screen.colorDepth,
       window.devicePixelRatio || 1,
       navigator.hardwareConcurrency || 0,
+      navigator.maxTouchPoints || 0,
       Intl.DateTimeFormat().resolvedOptions().timeZone || '',
       navigator.language || '',
       clientHints.platform,
     ].join('###');
 
-    const hardwareFp = await sha256(rawFpString);
+    var customHardwareFp = await sha256(hardwareVector);
 
-    // Primary visitor token: fallback to hardware fingerprint in incognito or when localStorage is reset
-    let storedVisitorId = '';
-    try {
-      storedVisitorId = localStorage.getItem('__resume_vid');
-      if (!storedVisitorId) {
-        storedVisitorId = hardwareFp;
-        localStorage.setItem('__resume_vid', storedVisitorId);
-      }
-    } catch (_) {
-      storedVisitorId = hardwareFp;
-    }
+    // Primary visitor token: use official FingerprintJS visitorId or hardened hardware hash
+    var resolvedVisitorId = fpVisitorId || customHardwareFp;
 
-    // Fresh event ID generated on EVERY single page load / reload (ensures reloads are counted!)
-    const eventId = (window.crypto && window.crypto.randomUUID)
+    return {
+      visitorId: resolvedVisitorId,
+      fpVisitorId: fpVisitorId,
+      customHardwareFp: customHardwareFp,
+      clientHints: clientHints,
+      isIncognito: isIncognito,
+      webgl: webglData,
+      math: mathData,
+    };
+  }
+
+  // Main Tracking Execution
+  async function initTracker() {
+    var queryParams = getQueryParams();
+    var fpData = await extractVisitorVisitorSafe();
+
+    // Fresh event ID generated on EVERY page load / reload (reload double-counts)
+    var eventId = (window.crypto && window.crypto.randomUUID)
       ? window.crypto.randomUUID()
       : ('evt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2));
 
-    const sessionId = getOrSetStorage('__resume_sid', true);
+    var sessionId = getOrSetStorage('__resume_sid', true);
 
-    const payload = {
+    var payload = {
       eventId: eventId,
-      visitorId: storedVisitorId,
+      visitorId: fpData.visitorId,
+      fpVisitorId: fpData.fpVisitorId,
+      hardwareFp: fpData.customHardwareFp,
       sessionId: sessionId,
-      clientHints: clientHints,
-      isIncognito: isIncognito,
+      clientHints: fpData.clientHints,
+      isIncognito: fpData.isIncognito,
       referrer: document.referrer || 'Direct',
       email: queryParams.email,
       utmSource: queryParams.utmSource,
@@ -193,6 +345,8 @@
       screen: {
         width: screen.width,
         height: screen.height,
+        availWidth: screen.availWidth,
+        availHeight: screen.availHeight,
         colorDepth: screen.colorDepth,
         pixelRatio: window.devicePixelRatio || 1,
         viewportW: window.innerWidth,
@@ -200,52 +354,65 @@
       },
     };
 
-    // Send view ingestion request
+    // Send telemetry ingestion request
     try {
-      const response = await fetch('/api/views/track', {
+      var response = await fetch('/api/views/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        const data = await response.json();
+        var data = await response.json();
         updateUIStats(data);
       } else {
-        // Fallback fetch stats
         fetchStatsOnly();
       }
     } catch (err) {
       fetchStatsOnly();
     }
 
-    // Start dwell time heartbeat (pings at 5s, 15s, 30s, 60s, 120s, 180s)
-    let elapsed = 0;
-    const intervals = [5, 10, 15, 30, 60, 60];
-    let intervalIndex = 0;
+    // Dwell time / heartbeat timer
+    var elapsed = 0;
+    var intervals = [5, 10, 15, 30, 60, 60];
+    var intervalIndex = 0;
 
     function scheduleHeartbeat() {
       if (intervalIndex >= intervals.length) return;
-      const step = intervals[intervalIndex++];
-      setTimeout(() => {
+      var step = intervals[intervalIndex++];
+      setTimeout(function () {
         elapsed += step;
         fetch('/api/views/heartbeat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ eventId: eventId, durationSeconds: elapsed }),
-        }).catch(() => {});
+        }).catch(function () {});
         scheduleHeartbeat();
       }, step * 1000);
     }
     scheduleHeartbeat();
   }
 
+  async function extractVisitorVisitorSafe() {
+    try {
+      return await extractVisitorFingerprint();
+    } catch (err) {
+      return {
+        visitorId: 'fallback_' + Math.random().toString(36).slice(2),
+        fpVisitorId: null,
+        customHardwareFp: null,
+        clientHints: {},
+        isIncognito: false,
+      };
+    }
+  }
+
   // Fetch stats without re-recording a view
   async function fetchStatsOnly() {
     try {
-      const res = await fetch('/api/views/stats');
+      var res = await fetch('/api/views/stats');
       if (res.ok) {
-        const stats = await res.json();
+        var stats = await res.json();
         updateUIStats(stats);
       }
     } catch (_) {}
@@ -253,21 +420,21 @@
 
   // Update views badge & popover UI
   function updateUIStats(data) {
-    const counterText = document.getElementById('viewsCounterText');
-    const statTotalViews = document.getElementById('statTotalViews');
-    const statUniqueVisitors = document.getElementById('statUniqueVisitors');
-    const statViewsToday = document.getElementById('statViewsToday');
-    const statYourDevice = document.getElementById('statYourDevice');
-    const statLocationFooter = document.getElementById('statLocationFooter');
+    var counterText = document.getElementById('viewsCounterText');
+    var statTotalViews = document.getElementById('statTotalViews');
+    var statUniqueVisitors = document.getElementById('statUniqueVisitors');
+    var statViewsToday = document.getElementById('statViewsToday');
+    var statYourDevice = document.getElementById('statYourDevice');
+    var statLocationFooter = document.getElementById('statLocationFooter');
 
-    const totalViews = data.totalViews !== undefined ? data.totalViews : (data.views || 0);
-    const uniqueVisitors = data.uniqueVisitors !== undefined ? data.uniqueVisitors : 0;
+    var totalViews = data.totalViews !== undefined ? data.totalViews : (data.views || 0);
+    var uniqueVisitors = data.uniqueVisitors !== undefined ? data.uniqueVisitors : 0;
 
     if (counterText) {
       if (totalViews > 0) {
-        counterText.textContent = `${totalViews.toLocaleString()} views`;
+        counterText.textContent = totalViews.toLocaleString() + ' views';
         if (uniqueVisitors > 0) {
-          counterText.title = `${totalViews} total views • ${uniqueVisitors} unique visitors`;
+          counterText.title = totalViews + ' total views • ' + uniqueVisitors + ' unique visitors';
         }
       } else {
         counterText.textContent = '1 view';
@@ -279,19 +446,19 @@
     if (statViewsToday) statViewsToday.textContent = (data.viewsToday || 0).toLocaleString();
     if (statYourDevice && data.device) statYourDevice.textContent = data.device;
     if (statLocationFooter && data.location) {
-      statLocationFooter.textContent = `📍 Approximate location: ${data.location}`;
+      statLocationFooter.textContent = '📍 Approximate location: ' + data.location;
     }
   }
 
   // Popover toggle handling
   function initPopover() {
-    const badgeBtn = document.getElementById('viewsBadgeBtn');
-    const popover = document.getElementById('viewsPopover');
+    var badgeBtn = document.getElementById('viewsBadgeBtn');
+    var popover = document.getElementById('viewsPopover');
     if (!badgeBtn || !popover) return;
 
-    badgeBtn.addEventListener('click', function(e) {
+    badgeBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const isVisible = popover.classList.contains('is-visible');
+      var isVisible = popover.classList.contains('is-visible');
       if (isVisible) {
         popover.classList.remove('is-visible');
       } else {
@@ -300,7 +467,7 @@
       }
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       if (!popover.contains(e.target) && e.target !== badgeBtn) {
         popover.classList.remove('is-visible');
       }
@@ -308,7 +475,7 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
       initPopover();
       initTracker();
     });
@@ -317,4 +484,3 @@
     initTracker();
   }
 })();
-

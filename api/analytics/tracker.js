@@ -148,11 +148,15 @@ async function recordView(req, payload = {}) {
   const device = parseDevice(ua, payload.clientHints || {});
 
   // Compute composite incognito-resilient visitor ID:
-  // Combines client hardware fingerprint + IP subnet + device brand
-  // When an incognito window is opened on the same machine & network, this hash stays identical!
-  const clientFp = payload.visitorId || crypto.randomUUID();
+  // Combines:
+  // 1. Official FingerprintJS v5 hash (payload.fpVisitorId or payload.visitorId)
+  // 2. Hardened hardware vector (payload.hardwareFp)
+  // 3. Client IP subnet (/24)
+  // 4. Device brand & platform
+  const clientFp = payload.fpVisitorId || payload.visitorId || crypto.randomUUID();
+  const hardwareFp = payload.hardwareFp || '';
   const subnet = getSubnet(ip);
-  const compositeVisitorId = hashString(`${clientFp}:${subnet}:${device.deviceBrand}`);
+  const compositeVisitorId = hashString(`${clientFp}:${hardwareFp}:${subnet}:${device.deviceBrand}`);
 
   const eventId = payload.eventId || crypto.randomUUID();
   const sessionId = payload.sessionId || crypto.randomUUID();
