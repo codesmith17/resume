@@ -1,23 +1,10 @@
 /**
- * Hardened Visitor Telemetry & Analytics Client.
- *
- * Architecture:
- * 1. FingerprintJS v5.3.0 Engine:
- *    Loads official FingerprintJS agent, extracting 17+ core entropy sources
- *    (canvas, audio, screenFrame, fonts, math, domBlockers, timezone, etc.).
- * 2. Hardened Multi-Layer Extractor (Complementary & Ad-Block Resilient):
- *    - WebGL Unmasked GPU Renderer & Shader Precision (ANGLE / Apple / Adreno / Mali / Intel)
- *    - User-Agent Client Hints High Entropy (exact hardware model e.g. moto g84 5G, Pixel, Galaxy)
- *    - AudioContext DynamicsCompressor oscillator frequency buffer
- *    - Math floating-point IEEE-754 transcendental function quirks (acos, sinh, tanh, expm1)
- *    - Canvas 2D multi-script, emoji, font winding & subpixel rasterization
- *    - Screen frame & device pixel ratio
- *    - Incognito / Private mode heuristic detection
- * 3. Double-counting on reload:
- *    Every page load generates a fresh event_id UUID so page views increment on every visit/reload.
- * 4. Incognito-Resilient Deduplication:
- *    Composite visitor identifier combines FingerprintJS hash + GPU hardware renderer +
- *    audio oscillator + screen frame. It remains identical across regular and incognito tabs!
+ * Document Viewer Telemetry & View Engine.
+ * Anti-Adblock Hardened:
+ * - Operates entirely through first-party unblocked routes (/api/views/record, /api/views/ping, /api/views/summary).
+ * - Avoids blacklisted keywords that trigger uBlock Origin / EasyPrivacy filters.
+ * - Double-counts reloads (every reload generates a fresh event_id).
+ * - Deduplicates unique visitors using persistent FingerprintJS + hardware GPU / canvas / audio signals.
  */
 
 (function () {
@@ -27,14 +14,13 @@
   async function sha256(str) {
     if (window.crypto && window.crypto.subtle && window.TextEncoder) {
       try {
-        const buffer = new TextEncoder().encode(str);
-        const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+        var buffer = new TextEncoder().encode(str);
+        var hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
         return Array.from(new Uint8Array(hashBuffer))
           .map(function (b) { return b.toString(16).padStart(2, '0'); })
           .join('');
       } catch (_) {}
     }
-    // FNV-1a 32-bit fallback
     var hash = 2166136261;
     for (var i = 0; i < str.length; i++) {
       hash ^= str.charCodeAt(i);
@@ -54,7 +40,6 @@
       var vendor = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
       var renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
 
-      // Extract shader precision metrics
       var vShaderPrec = gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT);
       var fShaderPrec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
 
@@ -79,7 +64,6 @@
       var ctx = canvas.getContext('2d');
       if (!ctx) return 'no-canvas';
 
-      // 1. Text with diverse unicode scripts and emojis
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#f60';
       ctx.fillRect(125, 1, 62, 20);
@@ -92,7 +76,6 @@
       ctx.font = '18pt Arial';
       ctx.fillText('Krishna Resume Telemetry, \ud83d\ude03 \ud83c\udff3\ufe0f\u200d\ud83c\udf08', 4, 45);
 
-      // 2. Geometry winding rules
       ctx.beginPath();
       ctx.arc(50, 50, 50, 0, Math.PI * 2, true);
       ctx.closePath();
@@ -179,7 +162,6 @@
   // --- ENTROPY SOURCE 5: Incognito / Private Window Heuristics ---
   async function detectIncognito() {
     try {
-      // Chromium private browsing limits storage quota drastically
       if (navigator.storage && navigator.storage.estimate) {
         var estimate = await navigator.storage.estimate();
         if (estimate.quota && estimate.quota < 130 * 1024 * 1024) {
@@ -234,7 +216,6 @@
     }
   }
 
-  // Query parameters (e.g. ?email=... &utm_source=...)
   function getQueryParams() {
     var params = new URLSearchParams(window.location.search);
     return {
@@ -259,9 +240,7 @@
           fpVisitorId = fpResult.visitorId;
           fpComponents = fpResult.components;
         }
-      } catch (err) {
-        console.warn('[telemetry] FingerprintJS error, falling back to hardened engine:', err);
-      }
+      } catch (_) {}
     }
 
     // 2. Run complementary hardened entropy sources
@@ -297,8 +276,6 @@
     ].join('###');
 
     var customHardwareFp = await sha256(hardwareVector);
-
-    // Primary visitor token: use official FingerprintJS visitorId or hardened hardware hash
     var resolvedVisitorId = fpVisitorId || customHardwareFp;
 
     return {
@@ -307,15 +284,13 @@
       customHardwareFp: customHardwareFp,
       clientHints: clientHints,
       isIncognito: isIncognito,
-      webgl: webglData,
-      math: mathData,
     };
   }
 
   // Main Tracking Execution
-  async function initTracker() {
+  async function initDocView() {
     var queryParams = getQueryParams();
-    var fpData = await extractVisitorVisitorSafe();
+    var fpData = await extractVisitorSafe();
 
     // Fresh event ID generated on EVERY page load / reload (reload double-counts)
     var eventId = (window.crypto && window.crypto.randomUUID)
@@ -354,9 +329,9 @@
       },
     };
 
-    // Send telemetry ingestion request
+    // Unblocked first-party endpoint (/api/views/record)
     try {
-      var response = await fetch('/api/views/track', {
+      var response = await fetch('/api/views/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -368,11 +343,11 @@
       } else {
         fetchStatsOnly();
       }
-    } catch (err) {
+    } catch (_) {
       fetchStatsOnly();
     }
 
-    // Dwell time / heartbeat timer
+    // Dwell time / heartbeat via unblocked /api/views/ping
     var elapsed = 0;
     var intervals = [5, 10, 15, 30, 60, 60];
     var intervalIndex = 0;
@@ -382,7 +357,7 @@
       var step = intervals[intervalIndex++];
       setTimeout(function () {
         elapsed += step;
-        fetch('/api/views/heartbeat', {
+        fetch('/api/views/ping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ eventId: eventId, durationSeconds: elapsed }),
@@ -393,10 +368,10 @@
     scheduleHeartbeat();
   }
 
-  async function extractVisitorVisitorSafe() {
+  async function extractVisitorSafe() {
     try {
       return await extractVisitorFingerprint();
-    } catch (err) {
+    } catch (_) {
       return {
         visitorId: 'fallback_' + Math.random().toString(36).slice(2),
         fpVisitorId: null,
@@ -407,10 +382,10 @@
     }
   }
 
-  // Fetch stats without re-recording a view
+  // Fetch summary without re-recording a view
   async function fetchStatsOnly() {
     try {
-      var res = await fetch('/api/views/stats');
+      var res = await fetch('/api/views/summary');
       if (res.ok) {
         var stats = await res.json();
         updateUIStats(stats);
@@ -418,7 +393,6 @@
     } catch (_) {}
   }
 
-  // Update views badge & popover UI
   function updateUIStats(data) {
     var counterText = document.getElementById('viewsCounterText');
     var statTotalViews = document.getElementById('statTotalViews');
@@ -450,7 +424,6 @@
     }
   }
 
-  // Popover toggle handling
   function initPopover() {
     var badgeBtn = document.getElementById('viewsBadgeBtn');
     var popover = document.getElementById('viewsPopover');
@@ -477,10 +450,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initPopover();
-      initTracker();
+      initDocView();
     });
   } else {
     initPopover();
-    initTracker();
+    initDocView();
   }
 })();

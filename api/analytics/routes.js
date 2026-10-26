@@ -1,18 +1,22 @@
 /**
- * Modular API router for visitor tracking & analytics endpoints.
+ * Modular API router for visitor telemetry & view counter endpoints.
+ * Anti-Adblock Hardened:
+ * Uses clean first-party endpoint names (/record, /ping, /summary)
+ * that bypass uBlock Origin, AdGuard, Brave Shields, and EasyPrivacy lists,
+ * while maintaining backward-compatible aliases (/track, /heartbeat, /stats).
  */
 const express = require('express');
 const router = express.Router();
 const { recordView, updateHeartbeat } = require('./tracker');
 const { getStats } = require('./stats');
 
-// Track page view event (supports reload double-counting + unique visitor deduplication)
-router.post('/track', async (req, res) => {
+// Handle view event ingestion (/record is unblocked by uBlock Origin)
+async function handleRecord(req, res) {
   try {
     const payload = req.body || {};
     const result = await recordView(req, payload);
 
-    // Fetch updated live stats to return immediately to the frontend
+    // Fetch updated live stats to return immediately to the frontend badge
     const stats = await getStats();
 
     res.json({
@@ -28,13 +32,16 @@ router.post('/track', async (req, res) => {
       uniqueToday: stats.uniqueToday,
     });
   } catch (err) {
-    console.error('Error tracking view:', err);
+    console.error('Error recording view:', err);
     res.status(500).json({ error: 'Failed to record view', details: err.message });
   }
-});
+}
 
-// Heartbeat to record time spent on resume
-router.post('/heartbeat', async (req, res) => {
+router.post('/record', handleRecord);
+router.post('/track', handleRecord); // legacy alias
+
+// Handle heartbeat / dwell time (/ping is unblocked by uBlock Origin)
+async function handlePing(req, res) {
   try {
     const { eventId, durationSeconds } = req.body || {};
     if (eventId) {
@@ -44,17 +51,22 @@ router.post('/heartbeat', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to update heartbeat' });
   }
-});
+}
 
-// Get aggregated stats for the UI badge & popover
-router.get('/stats', async (req, res) => {
+router.post('/ping', handlePing);
+router.post('/heartbeat', handlePing); // legacy alias
+
+// Get live aggregated view metrics (/summary is unblocked by uBlock Origin)
+async function handleSummary(req, res) {
   try {
     const stats = await getStats();
     res.json(stats);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
-});
+}
+
+router.get('/summary', handleSummary);
+router.get('/stats', handleSummary); // legacy alias
 
 module.exports = router;
-
