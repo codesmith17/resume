@@ -1679,27 +1679,22 @@
             }
 
             try {
+                var apiBase = window.location.hostname.includes('github.io')
+                    ? 'https://resume-mu-ivory-48.vercel.app'
+                    : '';
                 var controller = new AbortController();
                 var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
-                var res = await fetch('https://counterapi.com/api/v1/krishnatripathi/resume', { signal: controller.signal });
+                var res = await fetch(apiBase + '/api/views/summary', { signal: controller.signal });
                 clearTimeout(timeoutId);
 
                 if (!res.ok) return;
 
                 var data = await res.json();
-                var countNum = null;
-
-                if (data && typeof data.value === 'number') {
-                    countNum = data.value;
-                } else if (data && data.formatted) {
-                    countNum = parseInt(data.formatted, 10);
-                }
+                var countNum = (data && (typeof data.uniqueVisitors === 'number' ? data.uniqueVisitors : data.totalViews)) || null;
 
                 if (countNum !== null && !isNaN(countNum) && countNum > 0) {
-                    if (!badgeText.textContent || badgeText.textContent.trim().length === 0) {
-                        badgeText.textContent = countNum.toLocaleString() + ' views';
-                        badgeContainer.style.display = 'inline-flex';
-                    }
+                    badgeText.textContent = countNum.toLocaleString() + (countNum === 1 ? ' view' : ' views');
+                    badgeContainer.style.display = 'inline-flex';
                 }
             } catch (err) {
                 // Safely remain hidden if network fails

@@ -1533,7 +1533,8 @@
                 if (!actionBadges.length) actionBadges.push(`<span class="tag" style="color:var(--text-muted);">📄 Viewed</span>`);
 
                 const loc = `${escapeHtml(v.city || 'Unknown')}, ${escapeHtml(v.country_code || v.country || 'LOC')}`;
-                const isp = v.org ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(v.org)}</div>` : '';
+                const companyOrOrg = v.company || v.org || '';
+                const isp = companyOrOrg ? `<div style="font-size: 11px; color: var(--text-muted); font-weight: 500;" title="ASN: ${escapeHtml(v.asn || '')}">🏢 ${escapeHtml(companyOrOrg)}</div>` : '';
 
                 const dev = escapeHtml(v.device || 'Desktop');
                 const os = escapeHtml(v.os || 'Unknown OS');

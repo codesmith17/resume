@@ -648,6 +648,28 @@
       fetchStatsOnly(siteHost);
     }
 
+    function updateUIStats(stats) {
+      if (!stats) return;
+      var badgeContainer = document.getElementById('viewCounterBadge');
+      var badgeText = document.getElementById('viewCountText');
+      if (!badgeContainer || !badgeText) return;
+      var count = typeof stats.uniqueVisitors === 'number' ? stats.uniqueVisitors : stats.totalViews;
+      if (typeof count === 'number' && count > 0) {
+        badgeText.textContent = count.toLocaleString() + (count === 1 ? ' view' : ' views');
+        badgeContainer.style.display = 'inline-flex';
+      }
+    }
+
+    async function fetchStatsOnly(h) {
+      try {
+        var url = API_BASE + '/api/views/summary' + (h ? '?host=' + encodeURIComponent(h) : '');
+        var res = await fetch(url);
+        if (!res.ok) return;
+        var s = await res.json();
+        updateUIStats(s);
+      } catch (_) {}
+    }
+
     // Dwell time / heartbeat via unblocked /api/views/ping with section watching durations
     var intervals = [5, 10, 15, 30, 60, 60];
     var intervalIndex = 0;

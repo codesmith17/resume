@@ -59,7 +59,7 @@ async function resolveLocation(req, ip) {
   // 1. Check Vercel Edge Headers
   const vercelCountry = req.headers['x-vercel-ip-country'];
   if (vercelCountry) {
-    return {
+    const baseLocation = {
       country: req.headers['x-vercel-ip-country-name'] || vercelCountry,
       countryCode: vercelCountry,
       region: req.headers['x-vercel-ip-country-region'] || 'Unknown',
@@ -68,9 +68,32 @@ async function resolveLocation(req, ip) {
       longitude: req.headers['x-vercel-ip-longitude'] ? parseFloat(req.headers['x-vercel-ip-longitude']) : null,
       timezone: req.headers['x-vercel-ip-timezone'] || '',
       postal: '',
-      org: 'Vercel Edge Network',
-      asn: '',
+      org: '',
+      asn: req.headers['x-vercel-ip-as-number'] ? `AS${req.headers['x-vercel-ip-as-number']}` : '',
     };
+
+    // Dynamically lookup real Organization / Carrier and ASN from dynamic registry (cached in memory)
+    if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('192.168.') && !ip.startsWith('10.')) {
+      if (geoCache.has(ip)) {
+        const cached = geoCache.get(ip);
+        baseLocation.org = cached.org || baseLocation.org;
+        baseLocation.asn = cached.asn || baseLocation.asn;
+        return baseLocation;
+      }
+      try {
+        const resp = await axios.get(`http://ip-api.com/json/${ip}?fields=status,org,isp,as`, {
+          timeout: 2500,
+        });
+        if (resp.data && resp.data.status === 'success') {
+          baseLocation.org = resp.data.org || resp.data.isp || '';
+          baseLocation.asn = resp.data.as || baseLocation.asn;
+          if (geoCache.size > 2000) geoCache.clear();
+          geoCache.set(ip, { ...baseLocation });
+        }
+      } catch (_) {}
+    }
+
+    return baseLocation;
   }
 
   // 2. Private or loopback IP
@@ -182,6 +205,9 @@ async function recordView(req, payload = {}) {
     const domain = email.split('@')[1];
     company = domain.split('.')[0];
     company = company.charAt(0).toUpperCase() + company.slice(1);
+  }
+  if (!company && geo.org && geo.org !== 'Unknown' && geo.org !== 'Loopback / Dev') {
+    company = geo.org;
   }
 
   const screen = payload.screen || {};
