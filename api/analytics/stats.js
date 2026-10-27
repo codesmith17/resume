@@ -266,6 +266,9 @@ async function getAdminStats(options = {}) {
         downloaded_resume,
         downloaded_cover_letter,
         actions,
+        resume_duration_seconds,
+        letter_duration_seconds,
+        download_time_seconds,
         created_at,
         updated_at
       FROM visitor

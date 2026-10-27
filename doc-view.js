@@ -648,8 +648,7 @@
       fetchStatsOnly(siteHost);
     }
 
-    // Dwell time / heartbeat via unblocked /api/views/ping
-    var elapsed = 0;
+    // Dwell time / heartbeat via unblocked /api/views/ping with section watching durations
     var intervals = [5, 10, 15, 30, 60, 60];
     var intervalIndex = 0;
 
@@ -657,11 +656,16 @@
       if (intervalIndex >= intervals.length) return;
       var step = intervals[intervalIndex++];
       setTimeout(function () {
-        elapsed += step;
+        var d = computeWatchingDurations();
         fetch(API_BASE + '/api/views/ping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventId: eventId, durationSeconds: elapsed }),
+          body: JSON.stringify({
+            eventId: eventId,
+            durationSeconds: d.totalElapsed,
+            resumeDuration: d.resumeSeconds,
+            letterDuration: d.letterSeconds,
+          }),
         }).catch(function () {});
         scheduleHeartbeat();
       }, step * 1000);
@@ -669,43 +673,66 @@
     scheduleHeartbeat();
   }
 
-  // Fetch summary without re-recording a view
-  async function fetchStatsOnly(host) {
-    try {
-      var url = API_BASE + '/api/views/summary';
-      if (host) url += '?host=' + encodeURIComponent(host);
-      var res = await fetch(url);
-      if (res.ok) {
-        var stats = await res.json();
-        updateUIStats(stats);
-      }
-    } catch (_) {}
-  }
+  // Active section watching duration tracker
+  var pageStartTime = Date.now();
+  var activeDocSection = 'resume';
+  var sectionStartTime = Date.now();
+  var totalResumeSeconds = 0;
+  var totalLetterSeconds = 0;
 
-  // Updates ONLY the clean bottom footer badge
-  function updateUIStats(data) {
-    if (!data) return;
-    var totalViews = data.totalViews !== undefined ? data.totalViews : (data.views || 0);
-    var badgeContainer = document.getElementById('viewCounterBadge');
-    var badgeText = document.getElementById('viewCountText');
-
-    if (badgeContainer && badgeText) {
-      if (totalViews > 0) {
-        badgeText.textContent = totalViews.toLocaleString() + ' views';
-        badgeContainer.style.display = 'inline-flex';
-      }
-    }
+  function computeWatchingDurations() {
+    var now = Date.now();
+    var currentDelta = Math.max(0, Math.round((now - sectionStartTime) / 1000));
+    var resSec = totalResumeSeconds + (activeDocSection === 'resume' ? currentDelta : 0);
+    var letSec = totalLetterSeconds + (activeDocSection === 'cover-letter' ? currentDelta : 0);
+    var totalSec = Math.max(0, Math.round((now - pageStartTime) / 1000));
+    return {
+      totalElapsed: totalSec,
+      resumeSeconds: resSec,
+      letterSeconds: letSec,
+      activeSection: activeDocSection,
+    };
   }
 
   // Global action tracking dispatcher for user interactions (view cover letter, download, etc.)
+  // Strictly binds to the current visitor row — never creates duplicate rows!
   window.trackVisitorAction = function (actionName, details) {
+    details = details || {};
+    var durations = computeWatchingDurations();
+
+    if (actionName === 'view_cover_letter') {
+      totalResumeSeconds = durations.resumeSeconds;
+      activeDocSection = 'cover-letter';
+      sectionStartTime = Date.now();
+      details.label = 'Switched to Cover Letter';
+      details.watchedDuration = durations.resumeSeconds;
+    } else if (actionName === 'view_resume') {
+      totalLetterSeconds = durations.letterSeconds;
+      activeDocSection = 'resume';
+      sectionStartTime = Date.now();
+      details.label = 'Switched to Resume';
+      details.watchedDuration = durations.letterSeconds;
+    } else if (actionName === 'download_resume') {
+      details.label = 'Downloaded Resume PDF';
+      details.file = 'KRISHNA_TRIPATHI_RESUME.pdf';
+      details.watchedDurationBeforeDownload = durations.resumeSeconds;
+    } else if (actionName === 'download_cover_letter') {
+      details.label = 'Downloaded Cover Letter PDF';
+      details.file = 'KRISHNA_TRIPATHI_COVER_LETTER.pdf';
+      details.watchedDurationBeforeDownload = durations.letterSeconds;
+    }
+
+    details.elapsedSeconds = durations.totalElapsed;
+    details.resumeDuration = durations.resumeSeconds;
+    details.letterDuration = durations.letterSeconds;
+
     var eventId = window.__ataraxiaEventId || '';
     var visitorId = window.__ataraxiaVisitorId || '';
     var payload = JSON.stringify({
       eventId: eventId,
       visitorId: visitorId,
       action: actionName,
-      details: details || {},
+      details: details,
       timestamp: new Date().toISOString(),
     });
 

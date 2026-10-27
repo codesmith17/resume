@@ -343,37 +343,62 @@ async function recordView(req, payload = {}) {
 
 /**
  * Record user interactions (view cover letter, download resume, download cover letter, etc.)
+ * Strictly updates the single existing visitor row — never creates a duplicate row.
  */
 async function recordAction(eventId, visitorId, actionName, details = {}) {
   if (!db.isConfigured() || !actionName) return;
 
   const actionEntry = {
     action: actionName,
-    details,
+    label: details.label || actionName,
+    elapsed_seconds: details.elapsedSeconds !== undefined ? Math.round(details.elapsedSeconds) : null,
+    watched_duration_seconds: details.watchedDurationBeforeDownload !== undefined ? Math.round(details.watchedDurationBeforeDownload) : (details.watchedDuration !== undefined ? Math.round(details.watchedDuration) : null),
+    target: details.file || details.target || null,
     timestamp: new Date().toISOString(),
   };
 
-  let colUpdate = '';
+  const colUpdates = [];
+  const params = [eventId || '', visitorId || '', JSON.stringify([actionEntry])];
+
   if (actionName === 'view_resume') {
-    colUpdate = 'viewed_resume = COALESCE(viewed_resume, 0) + 1,';
+    colUpdates.push('viewed_resume = COALESCE(viewed_resume, 0) + 1');
   } else if (actionName === 'view_cover_letter') {
-    colUpdate = 'viewed_cover_letter = COALESCE(viewed_cover_letter, 0) + 1,';
+    colUpdates.push('viewed_cover_letter = COALESCE(viewed_cover_letter, 0) + 1');
   } else if (actionName === 'download_resume') {
-    colUpdate = 'downloaded_resume = COALESCE(downloaded_resume, 0) + 1,';
+    colUpdates.push('downloaded_resume = COALESCE(downloaded_resume, 0) + 1');
+    if (details.elapsedSeconds !== undefined) {
+      params.push(Math.round(details.elapsedSeconds));
+      colUpdates.push(`download_time_seconds = COALESCE(download_time_seconds, $${params.length})`);
+    }
   } else if (actionName === 'download_cover_letter') {
-    colUpdate = 'downloaded_cover_letter = COALESCE(downloaded_cover_letter, 0) + 1,';
+    colUpdates.push('downloaded_cover_letter = COALESCE(downloaded_cover_letter, 0) + 1');
+    if (details.elapsedSeconds !== undefined) {
+      params.push(Math.round(details.elapsedSeconds));
+      colUpdates.push(`download_time_seconds = COALESCE(download_time_seconds, $${params.length})`);
+    }
   }
+
+  if (details.resumeDuration !== undefined) {
+    params.push(Math.round(details.resumeDuration));
+    colUpdates.push(`resume_duration_seconds = GREATEST(COALESCE(resume_duration_seconds, 0), $${params.length})`);
+  }
+  if (details.letterDuration !== undefined) {
+    params.push(Math.round(details.letterDuration));
+    colUpdates.push(`letter_duration_seconds = GREATEST(COALESCE(letter_duration_seconds, 0), $${params.length})`);
+  }
+
+  const setClause = colUpdates.length ? colUpdates.join(', ') + ', ' : '';
 
   const sql = `
     UPDATE visitor
-    SET ${colUpdate}
+    SET ${setClause}
         actions = COALESCE(actions, '[]'::jsonb) || $3::jsonb,
         updated_at = NOW()
     WHERE id = $1 OR visitor_id = $2;
   `;
 
   try {
-    await db.query(sql, [eventId || '', visitorId || '', JSON.stringify([actionEntry])]);
+    await db.query(sql, params);
   } catch (err) {
     console.error('[tracker] Error recording action:', err.message);
   }
@@ -382,16 +407,23 @@ async function recordAction(eventId, visitorId, actionName, details = {}) {
 /**
  * Update viewing duration / heartbeat for an existing view event.
  */
-async function updateHeartbeat(eventId, durationSeconds = 5) {
+async function updateHeartbeat(eventId, durationSeconds = 5, resumeDuration = 0, letterDuration = 0) {
   if (!db.isConfigured() || !eventId) return;
   const sql = `
     UPDATE visitor
     SET duration_seconds = GREATEST(duration_seconds, $2::int),
+        resume_duration_seconds = GREATEST(COALESCE(resume_duration_seconds, 0), $3::int),
+        letter_duration_seconds = GREATEST(COALESCE(letter_duration_seconds, 0), $4::int),
         updated_at = NOW()
     WHERE id = $1;
   `;
   try {
-    await db.query(sql, [eventId, Math.round(durationSeconds)]);
+    await db.query(sql, [
+      eventId,
+      Math.round(durationSeconds),
+      Math.round(resumeDuration || 0),
+      Math.round(letterDuration || 0)
+    ]);
   } catch (err) {
     console.error('[tracker] Heartbeat update error:', err.message);
   }

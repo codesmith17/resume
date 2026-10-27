@@ -1240,6 +1240,7 @@
                 <button class="btn-action" onclick="closeModal()">✕</button>
             </div>
             <div class="modal-body">
+                <div id="modalActivitySummary" style="margin-bottom: 16px;"></div>
                 <div class="json-viewer" id="modalJsonContent"></div>
             </div>
             <div class="modal-footer">
@@ -1515,17 +1516,20 @@
                 const isDev = host.includes('localhost') || host.includes('127.0.0.1') || v.ip === '::1' || v.country === 'Local Network';
                 const hostTag = isDev ? `<span class="tag tag-dev">dev: ${escapeHtml(host)}</span>` : `<span class="tag tag-host">${escapeHtml(host)}</span>`;
 
-                // Interactions & Downloads
+                // Interactions & Downloads & Watch Times
                 const resViews = v.viewed_resume !== undefined ? v.viewed_resume : (v.view_count || 1);
                 const letViews = v.viewed_cover_letter || 0;
                 const resDl = v.downloaded_resume || 0;
                 const letDl = v.downloaded_cover_letter || 0;
+                const resDur = v.resume_duration_seconds ? `${v.resume_duration_seconds}s` : '';
+                const letDur = v.letter_duration_seconds ? `${v.letter_duration_seconds}s` : '';
+                const dlTime = v.download_time_seconds ? ` @${v.download_time_seconds}s` : '';
 
                 const actionBadges = [];
-                if (resViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(56,189,248,0.18);color:var(--accent-cyan);" title="Viewed Resume ${resViews} time(s)">📄 Resume (${resViews})</span>`);
-                if (letViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(168,85,247,0.18);color:var(--accent-purple);" title="Viewed Cover Letter ${letViews} time(s)">✉️ Letter (${letViews})</span>`);
-                if (resDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(16,185,129,0.2);color:var(--accent-emerald);font-weight:700;" title="Downloaded Resume ${resDl} time(s)">📥 Resume DL (${resDl})</span>`);
-                if (letDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(245,158,11,0.2);color:var(--accent-amber);font-weight:700;" title="Downloaded Cover Letter ${letDl} time(s)">📥 Letter DL (${letDl})</span>`);
+                if (resViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(56,189,248,0.18);color:var(--accent-cyan);" title="Watched Resume for ${resDur || dwell}">📄 Resume (${resViews}${resDur ? ' • ' + resDur : ''})</span>`);
+                if (letViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(168,85,247,0.18);color:var(--accent-purple);" title="Watched Cover Letter for ${letDur || '0s'}">✉️ Letter (${letViews}${letDur ? ' • ' + letDur : ''})</span>`);
+                if (resDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(16,185,129,0.2);color:var(--accent-emerald);font-weight:700;" title="Downloaded Resume after ${dlTime || 'browsing'}">📥 Resume DL (${resDl}${dlTime})</span>`);
+                if (letDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(245,158,11,0.2);color:var(--accent-amber);font-weight:700;" title="Downloaded Cover Letter">📥 Letter DL (${letDl})</span>`);
                 if (!actionBadges.length) actionBadges.push(`<span class="tag" style="color:var(--text-muted);">📄 Viewed</span>`);
 
                 const loc = `${escapeHtml(v.city || 'Unknown')}, ${escapeHtml(v.country_code || v.country || 'LOC')}`;
@@ -1678,6 +1682,51 @@
             document.getElementById('modalTitle').textContent = `INSPECT TELEMETRY // ID: ${v.id || 'N/A'}`;
             const formatted = JSON.stringify(v, null, 2);
             inspectedJson = formatted;
+
+            // Build rich activity timeline and engagement summary
+            const actions = Array.isArray(v.actions) ? v.actions : [];
+            const resDuration = v.resume_duration_seconds ? `${v.resume_duration_seconds}s` : `${v.duration_seconds || 0}s`;
+            const letDuration = v.letter_duration_seconds ? `${v.letter_duration_seconds}s` : '0s';
+            const dlResumeStr = v.downloaded_resume > 0 ? `<strong style="color:var(--accent-emerald);">Yes (${v.downloaded_resume}x)${v.download_time_seconds ? ' @' + v.download_time_seconds + 's' : ''}</strong>` : 'No';
+            const dlLetterStr = v.downloaded_cover_letter > 0 ? `<strong style="color:var(--accent-amber);">Yes (${v.downloaded_cover_letter}x)</strong>` : 'No';
+
+            let timelineHtml = `
+                <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px;">
+                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--accent-cyan); margin-bottom:10px; letter-spacing:0.5px;">
+                        ⏱️ Engagement & Activity Breakdown (Single DB Row)
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; font-size:12.5px; margin-bottom:12px;">
+                        <div>📄 Resume Watch Time: <strong style="color:var(--text-main); font-family:var(--font-mono);">${resDuration}</strong></div>
+                        <div>✉️ Cover Letter Watch Time: <strong style="color:var(--text-main); font-family:var(--font-mono);">${letDuration}</strong></div>
+                        <div>📥 Downloaded Resume: ${dlResumeStr}</div>
+                        <div>📥 Downloaded Letter: ${dlLetterStr}</div>
+                    </div>
+            `;
+
+            if (actions.length) {
+                timelineHtml += `
+                    <div style="border-top:1px solid var(--border); padding-top:10px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; font-weight:600;">Activity Stream:</div>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            ${actions.map((a, i) => {
+                                const t = a.timestamp ? new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+                                const elapsed = a.elapsed_seconds !== undefined && a.elapsed_seconds !== null ? `@+${a.elapsed_seconds}s` : '';
+                                const watched = a.watched_duration_seconds ? ` (after ${a.watched_duration_seconds}s watching)` : '';
+                                return `
+                                    <div style="font-size:12px; display:flex; align-items:center; gap:8px; font-family:var(--font-mono);">
+                                        <span style="color:var(--text-muted); font-size:11px;">#${i + 1} [${t}${elapsed ? ' • ' + elapsed : ''}]</span>
+                                        <span style="color:var(--accent-cyan); font-weight:600;">${escapeHtml(a.label || a.action)}</span>
+                                        <span style="color:var(--text-muted); font-size:11px;">${watched}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            timelineHtml += `</div>`;
+            document.getElementById('modalActivitySummary').innerHTML = timelineHtml;
             document.getElementById('modalJsonContent').textContent = formatted;
             document.getElementById('inspectModal').style.display = 'flex';
         }

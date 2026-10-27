@@ -129,9 +129,9 @@ router.post('/event', handleAction); // alias
 // Handle heartbeat / dwell time (/ping is unblocked by uBlock Origin)
 async function handlePing(req, res) {
   try {
-    const { eventId, durationSeconds } = req.body || {};
+    const { eventId, durationSeconds, resumeDuration, letterDuration } = req.body || {};
     if (eventId) {
-      await updateHeartbeat(eventId, durationSeconds);
+      await updateHeartbeat(eventId, durationSeconds, resumeDuration, letterDuration);
     }
     res.json({ success: true });
   } catch (err) {
