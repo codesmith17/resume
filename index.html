@@ -1484,137 +1484,7 @@
         })();
     </script>
 
-    <style>
-        /* === Live Views Badge & Telemetry Popover ============================== */
-        .views-badge-container {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-        }
-        .views-badge-btn {
-            background: rgba(37, 99, 235, 0.08);
-            border: 1px solid rgba(37, 99, 235, 0.25);
-            color: var(--accent, #2563eb);
-            padding: 9px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 13.5px;
-            font-weight: 600;
-            font-family: inherit;
-            transition: all 0.18s ease;
-        }
-        .views-badge-btn:hover {
-            background: rgba(37, 99, 235, 0.16);
-            border-color: var(--accent, #2563eb);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
-        }
-        .views-badge-btn .eye-icon {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            stroke-width: 2.2;
-        }
-        .views-popover {
-            position: absolute;
-            top: calc(100% + 10px);
-            right: 0;
-            width: 290px;
-            background: var(--card, #ffffff);
-            border: 1px solid var(--line, #e2e8f0);
-            border-radius: 12px;
-            padding: 14px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.05);
-            z-index: 10000;
-            display: none;
-            animation: popoverFadeIn 0.18s ease-out forwards;
-        }
-        .views-popover.is-visible {
-            display: block;
-        }
-        @keyframes popoverFadeIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .views-popover-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--line, #e2e8f0);
-            margin-bottom: 10px;
-        }
-        .views-popover-title {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text, #1e293b);
-        }
-        .views-popover-pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            animation: pulseDot 1.8s infinite;
-        }
-        @keyframes pulseDot {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .views-popover-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        .views-stat-box {
-            background: var(--bg, #f8fafc);
-            border: 1px solid var(--line, #e2e8f0);
-            border-radius: 8px;
-            padding: 8px 10px;
-            text-align: center;
-        }
-        .views-stat-num {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--accent, #2563eb);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .views-stat-lbl {
-            font-size: 11px;
-            color: var(--muted, #64748b);
-            margin-top: 2px;
-        }
-        .views-popover-footer {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid var(--line, #e2e8f0);
-            font-size: 11.5px;
-            color: var(--muted, #64748b);
-            line-height: 1.4;
-        }
-        [data-theme="dark"] .views-popover {
-            background: #182234;
-            border-color: #2b3952;
-            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-        }
-        [data-theme="dark"] .views-stat-box {
-            background: #111a28;
-            border-color: #23334c;
-        }
-        [data-theme="dark"] .views-badge-btn {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.35);
-            color: #60a5fa;
-        }
-    </style>
+
 
 </head>
 <body>
@@ -1655,44 +1525,6 @@
             </button>
 
             
-            <!-- Live Views Counter & Analytics Badge -->
-            <div class="views-badge-container" id="viewsBadgeContainer">
-                <button class="views-badge-btn" id="viewsBadgeBtn" type="button" aria-label="Resume View Analytics" title="Click to view visitor statistics">
-                    <svg class="icon eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <span id="viewsCounterText">Views: ...</span>
-                </button>
-                <div class="views-popover" id="viewsPopover">
-                    <div class="views-popover-header">
-                        <span class="views-popover-title">Live Telemetry</span>
-                        <span class="views-popover-pulse" title="Live telemetry active"></span>
-                    </div>
-                    <div class="views-popover-grid">
-                        <div class="views-stat-box">
-                            <div class="views-stat-num" id="statTotalViews">--</div>
-                            <div class="views-stat-lbl">Total Views</div>
-                        </div>
-                        <div class="views-stat-box">
-                            <div class="views-stat-num" id="statUniqueVisitors">--</div>
-                            <div class="views-stat-lbl">Unique Visitors</div>
-                        </div>
-                        <div class="views-stat-box">
-                            <div class="views-stat-num" id="statViewsToday">--</div>
-                            <div class="views-stat-lbl">Views Today</div>
-                        </div>
-                        <div class="views-stat-box">
-                            <div class="views-stat-num" id="statYourDevice">--</div>
-                            <div class="views-stat-lbl">Your Device</div>
-                        </div>
-                    </div>
-                    <div class="views-popover-footer" id="statLocationFooter">
-                        Detecting location…
-                    </div>
-                </div>
-            </div>
-
             <button class="theme-btn" id="themeToggle" type="button" aria-label="Switch to dark mode">
                 <svg class="icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"/></svg>
                 <svg class="icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -1841,6 +1673,11 @@
             var badgeText = document.getElementById('viewCountText');
             if (!badgeContainer || !badgeText) return;
 
+            if (badgeText.textContent && badgeText.textContent.trim().length > 0) {
+                badgeContainer.style.display = 'inline-flex';
+                return;
+            }
+
             try {
                 var controller = new AbortController();
                 var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
@@ -1859,8 +1696,10 @@
                 }
 
                 if (countNum !== null && !isNaN(countNum) && countNum > 0) {
-                    badgeText.textContent = countNum.toLocaleString() + ' views';
-                    badgeContainer.style.display = 'inline-flex';
+                    if (!badgeText.textContent || badgeText.textContent.trim().length === 0) {
+                        badgeText.textContent = countNum.toLocaleString() + ' views';
+                        badgeContainer.style.display = 'inline-flex';
+                    }
                 }
             } catch (err) {
                 // Safely remain hidden if network fails

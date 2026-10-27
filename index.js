@@ -16,7 +16,7 @@ app.use(express.json());
 const analyticsRoutes = require('./api/analytics/routes');
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/views', analyticsRoutes);
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 
 // Development mode detection
 const isDevelopment = !process.env.GOOGLE_CREDENTIALS || process.env.NODE_ENV === 'development';

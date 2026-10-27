@@ -10,6 +10,15 @@
 (function () {
   'use strict';
 
+  // Base API URL: when running statically on github.io, point to deployed Vercel backend
+  var API_BASE = (function () {
+    var host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
+    if (host.indexOf('github.io') !== -1) {
+      return 'https://resume-mu-ivory-48.vercel.app';
+    }
+    return '';
+  })();
+
   // Fast SHA-256 in browser using Web Crypto API with fallback
   async function sha256(str) {
     if (window.crypto && window.crypto.subtle && window.TextEncoder) {
@@ -331,7 +340,7 @@
 
     // Unblocked first-party endpoint (/api/views/record)
     try {
-      var response = await fetch('/api/views/record', {
+      var response = await fetch(API_BASE + '/api/views/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -357,7 +366,7 @@
       var step = intervals[intervalIndex++];
       setTimeout(function () {
         elapsed += step;
-        fetch('/api/views/ping', {
+        fetch(API_BASE + '/api/views/ping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ eventId: eventId, durationSeconds: elapsed }),
@@ -385,7 +394,7 @@
   // Fetch summary without re-recording a view
   async function fetchStatsOnly() {
     try {
-      var res = await fetch('/api/views/summary');
+      var res = await fetch(API_BASE + '/api/views/summary');
       if (res.ok) {
         var stats = await res.json();
         updateUIStats(stats);
@@ -394,66 +403,22 @@
   }
 
   function updateUIStats(data) {
-    var counterText = document.getElementById('viewsCounterText');
-    var statTotalViews = document.getElementById('statTotalViews');
-    var statUniqueVisitors = document.getElementById('statUniqueVisitors');
-    var statViewsToday = document.getElementById('statViewsToday');
-    var statYourDevice = document.getElementById('statYourDevice');
-    var statLocationFooter = document.getElementById('statLocationFooter');
-
+    if (!data) return;
     var totalViews = data.totalViews !== undefined ? data.totalViews : (data.views || 0);
-    var uniqueVisitors = data.uniqueVisitors !== undefined ? data.uniqueVisitors : 0;
+    var badgeContainer = document.getElementById('viewCounterBadge');
+    var badgeText = document.getElementById('viewCountText');
 
-    if (counterText) {
-      if (totalViews > 0) {
-        counterText.textContent = totalViews.toLocaleString() + ' views';
-        if (uniqueVisitors > 0) {
-          counterText.title = totalViews + ' total views • ' + uniqueVisitors + ' unique visitors';
-        }
-      } else {
-        counterText.textContent = '1 view';
-      }
+    if (badgeContainer && badgeText && totalViews > 0) {
+      badgeText.textContent = totalViews.toLocaleString() + ' views';
+      badgeContainer.style.display = 'inline-flex';
     }
-
-    if (statTotalViews) statTotalViews.textContent = totalViews.toLocaleString();
-    if (statUniqueVisitors) statUniqueVisitors.textContent = uniqueVisitors.toLocaleString();
-    if (statViewsToday) statViewsToday.textContent = (data.viewsToday || 0).toLocaleString();
-    if (statYourDevice && data.device) statYourDevice.textContent = data.device;
-    if (statLocationFooter && data.location) {
-      statLocationFooter.textContent = '📍 Approximate location: ' + data.location;
-    }
-  }
-
-  function initPopover() {
-    var badgeBtn = document.getElementById('viewsBadgeBtn');
-    var popover = document.getElementById('viewsPopover');
-    if (!badgeBtn || !popover) return;
-
-    badgeBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var isVisible = popover.classList.contains('is-visible');
-      if (isVisible) {
-        popover.classList.remove('is-visible');
-      } else {
-        popover.classList.add('is-visible');
-        fetchStatsOnly();
-      }
-    });
-
-    document.addEventListener('click', function (e) {
-      if (!popover.contains(e.target) && e.target !== badgeBtn) {
-        popover.classList.remove('is-visible');
-      }
-    });
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
-      initPopover();
       initDocView();
     });
   } else {
-    initPopover();
     initDocView();
   }
 })();
