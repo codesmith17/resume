@@ -448,6 +448,14 @@
 
     var sessionId = getOrSetStorage('__resume_sid', true);
 
+    // Read signed visitor token from cookie or localStorage for unbreakable deduplication
+    var savedSignedToken = '';
+    try {
+      var match = document.cookie.match(/(?:^|;\s*)__ataraxia_vid=([^;]+)/);
+      if (match && match[1]) savedSignedToken = match[1];
+      if (!savedSignedToken) savedSignedToken = localStorage.getItem('__ataraxia_vid') || '';
+    } catch (_) {}
+
     // Deep client telemetry bundle for hidden admin dashboard
     var deepTelemetry = {
       siteHost: siteHost,
@@ -520,6 +528,7 @@
         viewportW: window.innerWidth,
         viewportH: window.innerHeight,
       },
+      signedVisitorToken: savedSignedToken,
       clientTelemetry: deepTelemetry,
     };
 
@@ -533,6 +542,12 @@
 
       if (response.ok) {
         var data = await response.json();
+        if (data.signedVisitorToken) {
+          try {
+            localStorage.setItem('__ataraxia_vid', data.signedVisitorToken);
+            document.cookie = '__ataraxia_vid=' + encodeURIComponent(data.signedVisitorToken) + '; path=/; max-age=31536000; SameSite=Lax';
+          } catch (_) {}
+        }
         updateUIStats(data);
       } else {
         fetchStatsOnly(siteHost);

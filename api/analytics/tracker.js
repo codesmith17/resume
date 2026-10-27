@@ -199,7 +199,7 @@ async function recordView(req, payload = {}) {
       referrer, referrer_domain, email, company,
       utm_source, utm_medium, utm_campaign,
       user_agent, language, duration_seconds, view_count,
-      site_host, client_telemetry,
+      site_host, client_telemetry, visit_timestamps,
       created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5,
@@ -212,7 +212,7 @@ async function recordView(req, payload = {}) {
       $34, $35, $36, $37,
       $38, $39, $40,
       $41, $42, $43, $44,
-      $45, $46,
+      $45, $46, ARRAY[NOW()],
       NOW(), NOW()
     )
     ON CONFLICT (id) DO NOTHING
@@ -269,11 +269,43 @@ async function recordView(req, payload = {}) {
   ];
 
   let inserted = true;
+  let activeEventId = eventId;
+
   if (db.isConfigured()) {
     try {
-      const res = await db.query(insertSql, params);
-      if (res.rowCount === 0) {
-        inserted = false; // Idempotent duplicate eventId caught
+      // Revisit check: check if this visitor/session already exists
+      const existing = await db.query(
+        `SELECT id, view_count, duration_seconds, updated_at 
+         FROM resume_views 
+         WHERE session_id = $1 OR visitor_id = $2
+         ORDER BY created_at DESC 
+         LIMIT 1`,
+        [sessionId, compositeVisitorId]
+      );
+
+      if (existing.rows.length > 0) {
+        // User is revisiting! Do NOT add a new row.
+        // Instead, append this distinct attendance timestamp to visit_timestamps array:
+        activeEventId = existing.rows[0].id;
+        inserted = false;
+        await db.query(
+          `UPDATE resume_views 
+           SET view_count = view_count + 1,
+               visit_timestamps = CASE 
+                 WHEN updated_at < NOW() - INTERVAL '30 seconds' THEN array_append(COALESCE(visit_timestamps, ARRAY[created_at]), NOW())
+                 ELSE COALESCE(visit_timestamps, ARRAY[created_at])
+               END,
+               updated_at = NOW(),
+               site_host = COALESCE(NULLIF($2, ''), site_host),
+               client_telemetry = COALESCE($3, client_telemetry)
+           WHERE id = $1`,
+          [activeEventId, siteHost, JSON.stringify(clientTelemetry)]
+        );
+      } else {
+        const res = await db.query(insertSql, params);
+        if (res.rowCount === 0) {
+          inserted = false; // Idempotent duplicate eventId caught
+        }
       }
     } catch (err) {
       console.error('[tracker] DB insert error:', err.message);
@@ -282,7 +314,7 @@ async function recordView(req, payload = {}) {
 
   return {
     success: true,
-    eventId,
+    eventId: activeEventId,
     visitorId: compositeVisitorId,
     sessionId,
     inserted,

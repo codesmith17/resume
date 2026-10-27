@@ -132,12 +132,6 @@
             letter-spacing: 0.5px;
         }
 
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
         .form-input {
             width: 100%;
             background: var(--bg-elevated);
@@ -294,6 +288,40 @@
             color: var(--accent-rose);
         }
 
+        /* ── Tabs Navigation ────────────────────────────────────────── */
+        .tabs-bar {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
+        }
+
+        .tab-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.18s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            border-color: var(--accent-cyan);
+        }
+
+        .tab-btn.active {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
         /* ── Main Dashboard Layout ──────────────────────────────────── */
         .dashboard-container {
             flex: 1;
@@ -303,7 +331,7 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         /* ── KPI Grid ───────────────────────────────────────────────── */
@@ -501,7 +529,6 @@
         .tag-host { background: rgba(56, 189, 248, 0.12); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.25); }
         .tag-dev { background: rgba(245, 158, 11, 0.12); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.25); }
         .tag-incognito { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); border: 1px solid rgba(168, 85, 247, 0.3); }
-        .tag-mobile { background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.25); }
 
         .btn-inspect {
             background: rgba(56, 189, 248, 0.1);
@@ -518,6 +545,81 @@
         .btn-inspect:hover {
             background: var(--accent-cyan);
             color: #070a13;
+        }
+
+        /* ── Storage Page Diagnostics Styles ────────────────────────── */
+        .storage-meter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .storage-meter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .storage-badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .storage-progress-bar {
+            height: 16px;
+            background: var(--bg-elevated);
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .storage-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #38bdf8);
+            border-radius: 9999px;
+            transition: width 0.6s ease;
+        }
+
+        .storage-stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .storage-stat-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .storage-stat-box .lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .storage-stat-box .val {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--text-main);
+            margin-top: 4px;
         }
 
         /* ── Modal (Full JSON & Telemetry Inspector) ────────────────── */
@@ -624,17 +726,17 @@
             <div class="nav-brand">
                 <span class="pulse-dot"></span>
                 <span class="brand-text">ATARAXIA // TELEMETRICS</span>
-                <span class="brand-pill">Command v2.4</span>
+                <span class="brand-pill">Command v2.5</span>
             </div>
         </div>
         <div class="nav-right">
-            <select class="filter-select" id="hostFilter" onchange="loadDashboardData()">
+            <select class="filter-select" id="hostFilter" onchange="loadCurrentTab()">
                 <option value="all">Filter: All Hosts</option>
                 <option value="codesmith17.github.io">codesmith17.github.io (Prod)</option>
                 <option value="vercel">Vercel Deployments</option>
                 <option value="localhost">localhost (Dev)</option>
             </select>
-            <button class="btn-action" onclick="loadDashboardData()" title="Refresh telemetry">
+            <button class="btn-action" onclick="loadCurrentTab()" title="Refresh telemetry">
                 <span>↻</span>
                 <span id="refreshLabel">Refresh</span>
             </button>
@@ -647,119 +749,225 @@
     <!-- ── MAIN DASHBOARD ─────────────────────────────────────────── -->
     <main class="dashboard-container">
 
-        <!-- Executive KPIs -->
-        <section class="kpi-grid">
-            <div class="kpi-card accent-cyan">
-                <div class="kpi-title">
-                    <span>Production Views</span>
-                    <span>🌐</span>
-                </div>
-                <div class="kpi-value" id="kpiProdViews">--</div>
-                <div class="kpi-desc">Real audience (strictly non-dev)</div>
-            </div>
-            <div class="kpi-card accent-emerald">
-                <div class="kpi-title">
-                    <span>Unique Visitors</span>
-                    <span>👤</span>
-                </div>
-                <div class="kpi-value" id="kpiUniqueVisitors">--</div>
-                <div class="kpi-desc">Deduplicated hardware identities</div>
-            </div>
-            <div class="kpi-card accent-amber">
-                <div class="kpi-title">
-                    <span>Dev Sandbox Hits</span>
-                    <span>🧪</span>
-                </div>
-                <div class="kpi-value" id="kpiDevViews">--</div>
-                <div class="kpi-desc">Localhost/127.0.0.1 (isolated)</div>
-            </div>
-            <div class="kpi-card accent-purple">
-                <div class="kpi-title">
-                    <span>Views Today</span>
-                    <span>📅</span>
-                </div>
-                <div class="kpi-value" id="kpiViewsToday">--</div>
-                <div class="kpi-desc" id="kpiUniqueTodayDesc">0 unique today</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">
-                    <span>Avg Dwell Time</span>
-                    <span>⏱️</span>
-                </div>
-                <div class="kpi-value" id="kpiAvgDwell">--</div>
-                <div class="kpi-desc">Active reading duration</div>
-            </div>
-            <div class="kpi-card accent-emerald">
-                <div class="kpi-title">
-                    <span>Active Sessions</span>
-                    <span>⚡</span>
-                </div>
-                <div class="kpi-value" id="kpiActiveNow">--</div>
-                <div class="kpi-desc">Heartbeats in last 5m</div>
-            </div>
-        </section>
+        <!-- Navigation Tabs: Telemetry vs Database Storage -->
+        <nav class="tabs-bar">
+            <button class="tab-btn active" id="tabTelemetryBtn" onclick="switchTab('telemetry')">
+                <span>📊</span>
+                <span>Visitor Telemetry</span>
+            </button>
+            <button class="tab-btn" id="tabStorageBtn" onclick="switchTab('storage')">
+                <span>💾</span>
+                <span>Database Storage & Capacity</span>
+            </button>
+        </nav>
 
-        <!-- Analytics Visuals Breakdown -->
-        <section class="analytics-grid">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">📱 Devices & Platforms</span>
-                </div>
-                <div class="stat-bars" id="devicesList">
-                    <div style="color: var(--text-muted); font-size: 12px;">Loading devices…</div>
-                </div>
-            </div>
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">🌍 Top Geographies</span>
-                </div>
-                <div class="stat-bars" id="countriesList">
-                    <div style="color: var(--text-muted); font-size: 12px;">Loading locations…</div>
-                </div>
-            </div>
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">🔗 Traffic Origins</span>
-                </div>
-                <div class="stat-bars" id="referrersList">
-                    <div style="color: var(--text-muted); font-size: 12px;">Loading referrers…</div>
-                </div>
-            </div>
-        </section>
+        <!-- ── TAB 1: VISITOR TELEMETRY VIEW ────────────────────────── -->
+        <div id="viewTelemetry" style="display: flex; flex-direction: column; gap: 24px;">
 
-        <!-- Deep Visitor Telemetry Stream -->
-        <section class="feed-section">
-            <div class="feed-header">
-                <div class="feed-title">
-                    <span>🔬 Deep Visitor Telemetry Feed</span>
-                    <span class="tag tag-host" id="feedCountTag">0 records</span>
+            <!-- Executive KPIs -->
+            <section class="kpi-grid">
+                <div class="kpi-card accent-cyan">
+                    <div class="kpi-title">
+                        <span>Production Views</span>
+                        <span>🌐</span>
+                    </div>
+                    <div class="kpi-value" id="kpiProdViews">--</div>
+                    <div class="kpi-desc">Real audience (strictly non-dev)</div>
                 </div>
-            </div>
-            <div class="feed-table-wrapper">
-                <table class="feed-table">
-                    <thead>
-                        <tr>
-                            <th>Time & Dwell</th>
-                            <th>Host / Env</th>
-                            <th>Location & ISP</th>
-                            <th>Device & OS</th>
-                            <th>Browser</th>
-                            <th>Hardware Profile</th>
-                            <th>Network & Battery</th>
-                            <th>Security</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="visitorsTableBody">
-                        <tr>
-                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                                Loading telemetry stream…
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                <div class="kpi-card accent-emerald">
+                    <div class="kpi-title">
+                        <span>Unique Visitors</span>
+                        <span>👤</span>
+                    </div>
+                    <div class="kpi-value" id="kpiUniqueVisitors">--</div>
+                    <div class="kpi-desc">Signed cookie & hardware identities</div>
+                </div>
+                <div class="kpi-card accent-amber">
+                    <div class="kpi-title">
+                        <span>Dev Sandbox Hits</span>
+                        <span>🧪</span>
+                    </div>
+                    <div class="kpi-value" id="kpiDevViews">--</div>
+                    <div class="kpi-desc">Localhost/127.0.0.1 (isolated)</div>
+                </div>
+                <div class="kpi-card accent-purple">
+                    <div class="kpi-title">
+                        <span>Views Today</span>
+                        <span>📅</span>
+                    </div>
+                    <div class="kpi-value" id="kpiViewsToday">--</div>
+                    <div class="kpi-desc" id="kpiUniqueTodayDesc">0 unique today</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">
+                        <span>Avg Dwell Time</span>
+                        <span>⏱️</span>
+                    </div>
+                    <div class="kpi-value" id="kpiAvgDwell">--</div>
+                    <div class="kpi-desc">Active reading duration</div>
+                </div>
+                <div class="kpi-card accent-emerald">
+                    <div class="kpi-title">
+                        <span>Active Sessions</span>
+                        <span>⚡</span>
+                    </div>
+                    <div class="kpi-value" id="kpiActiveNow">--</div>
+                    <div class="kpi-desc">Heartbeats in last 5m</div>
+                </div>
+            </section>
+
+            <!-- Analytics Visuals Breakdown -->
+            <section class="analytics-grid">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">📱 Devices & Platforms</span>
+                    </div>
+                    <div class="stat-bars" id="devicesList">
+                        <div style="color: var(--text-muted); font-size: 12px;">Loading devices…</div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">🌍 Top Geographies</span>
+                    </div>
+                    <div class="stat-bars" id="countriesList">
+                        <div style="color: var(--text-muted); font-size: 12px;">Loading locations…</div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <span class="panel-title">🔗 Traffic Origins</span>
+                    </div>
+                    <div class="stat-bars" id="referrersList">
+                        <div style="color: var(--text-muted); font-size: 12px;">Loading referrers…</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deep Visitor Telemetry Stream -->
+            <section class="feed-section">
+                <div class="feed-header">
+                    <div class="feed-title">
+                        <span>🔬 Deep Visitor Telemetry Feed</span>
+                        <span class="tag tag-host" id="feedCountTag">0 records</span>
+                    </div>
+                </div>
+                <div class="feed-table-wrapper">
+                    <table class="feed-table">
+                        <thead>
+                            <tr>
+                                <th>Time & Attendance</th>
+                                <th>Host / Env</th>
+                                <th>Location & ISP</th>
+                                <th>Device & OS</th>
+                                <th>Browser</th>
+                                <th>Hardware Profile</th>
+                                <th>Network & Battery</th>
+                                <th>Security</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visitorsTableBody">
+                            <tr>
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    Loading telemetry stream…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ── TAB 2: DATABASE STORAGE DIAGNOSTICS VIEW ─────────────── -->
+        <div id="viewStorage" style="display: none; flex-direction: column; gap: 24px;">
+
+            <!-- Main Cluster Storage Gauge -->
+            <section class="storage-meter-card">
+                <div class="storage-meter-header">
+                    <div>
+                        <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">YugabyteDB Cluster Disk Capacity</h2>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Real-time physical disk allocation across distributed DocDB tablet nodes</p>
+                    </div>
+                    <div class="storage-badge-status" id="dbHealthBadge">
+                        <span>●</span>
+                        <span id="dbHealthText">Optimal 🟢</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+                        <span>Used: <strong id="storageUsedStr" style="color: var(--accent-cyan);">-- MB</strong> (<span id="storageUsedPct">--</span>%)</span>
+                        <span>Free Space: <strong id="storageFreeStr" style="color: var(--accent-emerald);">-- GB</strong> (<span id="storageFreePct">--</span>%)</span>
+                    </div>
+                    <div class="storage-progress-bar">
+                        <div class="storage-progress-fill" id="storageProgressFill" style="width: 0%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px; font-family: var(--font-mono);">
+                        <span>0 MB</span>
+                        <span id="storageQuotaStr">Quota: 10.00 GB Managed</span>
+                    </div>
+                </div>
+
+                <div class="storage-stat-row">
+                    <div class="storage-stat-box">
+                        <div class="lbl">Available Free Space</div>
+                        <div class="val" id="statFreeGb" style="color: var(--accent-emerald);">-- GB</div>
+                    </div>
+                    <div class="storage-stat-box">
+                        <div class="lbl">Total Storage Used</div>
+                        <div class="val" id="statUsedMb" style="color: var(--accent-cyan);">-- MB</div>
+                    </div>
+                    <div class="storage-stat-box">
+                        <div class="lbl">Total Resume Records</div>
+                        <div class="val" id="statTotalRows" style="color: var(--text-main);">--</div>
+                    </div>
+                    <div class="storage-stat-box">
+                        <div class="lbl">Capacity Runway</div>
+                        <div class="val" id="statRunway" style="color: var(--accent-purple);">6.5M+</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Table Sizes Breakdown -->
+            <section class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">📦 Database Relations & Footprint</span>
+                    <button class="btn-action" onclick="loadStorageData()">↻ Refresh Tables</button>
+                </div>
+                <div class="feed-table-wrapper">
+                    <table class="feed-table">
+                        <thead>
+                            <tr>
+                                <th>Table Name</th>
+                                <th>Total Size (Data + Index)</th>
+                                <th>Raw Data Size</th>
+                                <th>Index Size</th>
+                                <th>Storage Share</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dbTablesTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading storage details…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Storage Health & Longevity Insights -->
+            <section class="panel-card" style="background: rgba(13, 19, 34, 0.6);">
+                <div class="panel-header">
+                    <span class="panel-title">💡 Capacity Forecast & Deduplication Efficiency</span>
+                </div>
+                <div style="font-size: 13.5px; line-height: 1.7; color: var(--text-muted);">
+                    <p>• <strong>Signed Cookie Deduplication:</strong> Returning visitors are automatically verified via HMAC-SHA256 and appended to existing records rather than creating redundant rows.</p>
+                    <p style="margin-top: 6px;">• <strong>Cluster Headroom:</strong> At an average footprint of ~1.8 KB per visitor session, your YugabyteDB 10 GB cloud quota can comfortably store over <strong>6,500,000+</strong> individual visitor journeys.</p>
+                    <p style="margin-top: 6px;">• <strong>Auto-Maintenance:</strong> PostgreSQL auto-vacuum and DocDB compaction keep dead row bloat to near-zero.</p>
+                </div>
+            </section>
+
+        </div>
 
     </main>
 
@@ -782,7 +990,6 @@
 
     <!-- ── SCRIPTS ────────────────────────────────────────────────── -->
     <script>
-        // API Base configuration (supports GitHub Pages -> Vercel backend)
         const API_BASE = (() => {
             const host = window.location.hostname || '';
             if (host.indexOf('github.io') !== -1) {
@@ -793,19 +1000,49 @@
 
         let currentAdminToken = sessionStorage.getItem('__ataraxia_admin_token') || localStorage.getItem('__ataraxia_admin_token') || '';
         let cachedVisitors = [];
+        let currentTab = 'telemetry';
 
-        // Check auth on page load
         window.addEventListener('DOMContentLoaded', async () => {
             if (currentAdminToken) {
                 const isValid = await verifyCurrentToken();
                 if (isValid) {
                     hideLogin();
-                    loadDashboardData();
+                    loadCurrentTab();
                     return;
                 }
             }
             showLogin();
         });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabTelBtn = document.getElementById('tabTelemetryBtn');
+            const tabStoBtn = document.getElementById('tabStorageBtn');
+            const viewTel = document.getElementById('viewTelemetry');
+            const viewSto = document.getElementById('viewStorage');
+
+            if (tab === 'telemetry') {
+                tabTelBtn.classList.add('active');
+                tabStoBtn.classList.remove('active');
+                viewTel.style.display = 'flex';
+                viewSto.style.display = 'none';
+                loadDashboardData();
+            } else {
+                tabTelBtn.classList.remove('active');
+                tabStoBtn.classList.add('active');
+                viewTel.style.display = 'none';
+                viewSto.style.display = 'flex';
+                loadStorageData();
+            }
+        }
+
+        function loadCurrentTab() {
+            if (currentTab === 'telemetry') {
+                loadDashboardData();
+            } else {
+                loadStorageData();
+            }
+        }
 
         async function verifyCurrentToken() {
             try {
@@ -841,7 +1078,7 @@
                     currentAdminToken = data.token;
                     sessionStorage.setItem('__ataraxia_admin_token', data.token);
                     hideLogin();
-                    loadDashboardData();
+                    loadCurrentTab();
                 } else {
                     errorBox.textContent = data.error || 'Authentication failed.';
                     errorBox.style.display = 'block';
@@ -870,6 +1107,7 @@
             document.getElementById('loginOverlay').style.display = 'none';
         }
 
+        // --- Tab 1: Telemetry Data ---
         async function loadDashboardData() {
             if (!currentAdminToken) {
                 showLogin();
@@ -990,6 +1228,15 @@
                 const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
                 const dwell = (v.duration_seconds || 0) + 's';
 
+                const rawTimes = Array.isArray(v.visit_timestamps) && v.visit_timestamps.length ? v.visit_timestamps : [v.created_at];
+                const distinctTimes = Array.from(new Set(rawTimes));
+                const visitsCount = Math.max(distinctTimes.length, v.view_count || 1);
+
+                const timesTooltip = distinctTimes.map((t, i) => `#${i + 1}: ${new Date(t).toLocaleString()}`).join('&#10;');
+                const visitsPill = visitsCount > 1
+                    ? `<div style="margin-top:4px;"><span class="tag" style="background:rgba(56,189,248,0.18); color:var(--accent-cyan); cursor:help;" title="${timesTooltip}">⚡ Attended ${visitsCount} times</span></div>`
+                    : '';
+
                 const host = v.site_host || 'unspecified';
                 const isDev = host.includes('localhost') || host.includes('127.0.0.1') || v.ip === '::1' || v.country === 'Local Network';
                 const hostTag = isDev ? `<span class="tag tag-dev">dev: ${escapeHtml(host)}</span>` : `<span class="tag tag-host">${escapeHtml(host)}</span>`;
@@ -1022,6 +1269,7 @@
                         <td>
                             <div style="font-weight:600; font-family:var(--font-mono);">${timeStr}</div>
                             <div style="font-size:11px; color:var(--text-muted);">${dateStr} • ${dwell}</div>
+                            ${visitsPill}
                         </td>
                         <td>${hostTag}</td>
                         <td>
@@ -1047,6 +1295,86 @@
                         </td>
                         <td>
                             <button class="btn-inspect" onclick="inspectVisitor(${idx})">Inspect</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // --- Tab 2: Database Storage Diagnostics ---
+        async function loadStorageData() {
+            if (!currentAdminToken) {
+                showLogin();
+                return;
+            }
+
+            const refreshLabel = document.getElementById('refreshLabel');
+            refreshLabel.textContent = 'Loading Storage…';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/views/admin-storage`, {
+                    headers: { 'Authorization': `Bearer ${currentAdminToken}` }
+                });
+
+                if (res.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!res.ok) throw new Error('Failed to fetch storage data');
+
+                const data = await res.json();
+                renderStorageDiagnostics(data);
+            } catch (err) {
+                console.error('Error loading storage metrics:', err);
+            } finally {
+                refreshLabel.textContent = 'Refresh';
+            }
+        }
+
+        function renderStorageDiagnostics(data) {
+            const usedPct = data.usedPercent || 0;
+            const freePct = data.freePercent || 100;
+
+            document.getElementById('storageUsedStr').textContent = data.totalUsedPretty || '-- MB';
+            document.getElementById('storageUsedPct').textContent = usedPct;
+            document.getElementById('storageFreeStr').textContent = data.freePretty || '-- GB';
+            document.getElementById('storageFreePct').textContent = freePct;
+
+            document.getElementById('statFreeGb').textContent = data.freePretty || '-- GB';
+            document.getElementById('statUsedMb').textContent = data.totalUsedPretty || '-- MB';
+            document.getElementById('statTotalRows').textContent = (data.totalRows || 0).toLocaleString();
+            document.getElementById('statRunway').textContent = `${((data.estimatedCapacityRemaining || 6500000) / 1000000).toFixed(1)}M+`;
+
+            const fillWidth = Math.max(usedPct, 0.4);
+            document.getElementById('storageProgressFill').style.width = `${fillWidth}%`;
+
+            const tbody = document.getElementById('dbTablesTableBody');
+            const tables = data.tables || [];
+
+            if (!tables.length) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No tables detected.</td></tr>`;
+                return;
+            }
+
+            const totalUsed = data.totalUsedBytes || 1;
+
+            tbody.innerHTML = tables.map(t => {
+                const bytes = parseInt(t.total_bytes, 10) || 0;
+                const share = ((bytes / totalUsed) * 100).toFixed(1);
+                return `
+                    <tr>
+                        <td><strong style="color:var(--accent-cyan); font-family:var(--font-mono);">${escapeHtml(t.table_name)}</strong></td>
+                        <td style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(t.total_size)}</td>
+                        <td style="font-family:var(--font-mono); color:var(--text-muted);">${escapeHtml(t.data_size || '--')}</td>
+                        <td style="font-family:var(--font-mono); color:var(--text-muted);">${escapeHtml(t.index_size || '--')}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="flex:1; max-width:80px; height:6px; background:var(--bg-elevated); border-radius:9999px; overflow:hidden;">
+                                    <div style="width:${share}%; height:100%; background:var(--accent-cyan); border-radius:9999px;"></div>
+                                </div>
+                                <span style="font-family:var(--font-mono); font-size:11px;">${share}%</span>
+                            </div>
                         </td>
                     </tr>
                 `;

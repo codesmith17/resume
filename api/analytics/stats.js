@@ -43,12 +43,12 @@ async function getStats(options = {}) {
       where += ` AND (LOWER(site_host) LIKE $${params.length} OR site_host IS NULL)`;
     }
 
-    // 1. Production counts
+    // 1. Production counts (Deduplicated strictly by unique visitor)
     const overviewRes = await db.query(`
       SELECT
-        COUNT(*)::int AS total_views,
+        COUNT(DISTINCT visitor_id)::int AS total_views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors,
-        COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END)::int AS views_today,
+        COUNT(DISTINCT CASE WHEN created_at >= CURRENT_DATE THEN visitor_id END)::int AS views_today,
         COUNT(DISTINCT CASE WHEN created_at >= CURRENT_DATE THEN visitor_id END)::int AS unique_today
       FROM resume_views
       ${where};
@@ -256,6 +256,7 @@ async function getAdminStats(options = {}) {
         duration_seconds,
         view_count,
         client_telemetry,
+        visit_timestamps,
         created_at,
         updated_at
       FROM resume_views
@@ -285,4 +286,68 @@ async function getAdminStats(options = {}) {
   }
 }
 
-module.exports = { getStats, getAdminStats };
+/**
+ * Live Database Storage Diagnostics.
+ * Queries actual relation, index, and table disk footprints in YugabyteDB.
+ */
+async function getStorageStats() {
+  if (!db.isConfigured()) {
+    return { configured: false, error: 'Database not configured' };
+  }
+
+  try {
+    const tablesRes = await db.query(`
+      SELECT 
+        table_name, 
+        pg_size_pretty(pg_total_relation_size(quote_ident(table_name))) as total_size,
+        pg_total_relation_size(quote_ident(table_name)) as total_bytes,
+        pg_size_pretty(pg_relation_size(quote_ident(table_name))) as data_size,
+        pg_relation_size(quote_ident(table_name)) as data_bytes,
+        pg_size_pretty(pg_indexes_size(quote_ident(table_name))) as index_size,
+        pg_indexes_size(quote_ident(table_name)) as index_bytes
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      ORDER BY total_bytes DESC;
+    `);
+
+    const rowCountRes = await db.query(`
+      SELECT COUNT(*)::int as count FROM resume_views;
+    `);
+
+    const CLUSTER_QUOTA_BYTES = 10 * 1024 * 1024 * 1024; // 10.00 GB Managed Cloud Quota
+    let totalUsedBytes = 0;
+    tablesRes.rows.forEach(t => {
+      totalUsedBytes += parseInt(t.total_bytes, 10) || 0;
+    });
+
+    const freeBytes = Math.max(0, CLUSTER_QUOTA_BYTES - totalUsedBytes);
+    const usedPercent = ((totalUsedBytes / CLUSTER_QUOTA_BYTES) * 100).toFixed(2);
+    const freePercent = (100 - parseFloat(usedPercent)).toFixed(2);
+
+    const totalRows = rowCountRes.rows[0]?.count || 0;
+    const avgRowBytes = totalRows > 0 ? Math.round(totalUsedBytes / totalRows) : 2048;
+    const estimatedCapacityRemaining = Math.floor(freeBytes / Math.max(avgRowBytes, 1024));
+
+    return {
+      configured: true,
+      clusterQuotaBytes: CLUSTER_QUOTA_BYTES,
+      clusterQuotaPretty: '10.00 GB',
+      totalUsedBytes,
+      totalUsedPretty: (totalUsedBytes / (1024 * 1024)).toFixed(2) + ' MB',
+      freeBytes,
+      freePretty: (freeBytes / (1024 * 1024 * 1024)).toFixed(3) + ' GB',
+      usedPercent: parseFloat(usedPercent),
+      freePercent: parseFloat(freePercent),
+      totalRows,
+      avgRowBytes,
+      estimatedCapacityRemaining,
+      tables: tablesRes.rows,
+      timestamp: new Date().toISOString()
+    };
+  } catch (err) {
+    console.error('[stats] Storage Query error:', err.message);
+    return { configured: true, error: err.message };
+  }
+}
+
+module.exports = { getStats, getAdminStats, getStorageStats };
