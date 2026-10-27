@@ -7,8 +7,16 @@ const cors = require('cors');
 
 const app = express();
 
-// Enable CORS for all origins
-app.use(cors());
+// Enable CORS with credentials support for cross-origin tracking
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    return callback(null, origin);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Signed-Visitor-Token', 'x-signed-visitor-token']
+}));
 app.use(express.json());
 
 // Modular analytics & view tracking routes

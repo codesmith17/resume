@@ -448,13 +448,98 @@
 
     var sessionId = getOrSetStorage('__resume_sid', true);
 
-    // Read signed visitor token from cookie or localStorage for unbreakable deduplication
-    var savedSignedToken = '';
-    try {
-      var match = document.cookie.match(/(?:^|;\s*)__ataraxia_vid=([^;]+)/);
-      if (match && match[1]) savedSignedToken = match[1];
-      if (!savedSignedToken) savedSignedToken = localStorage.getItem('__ataraxia_vid') || '';
-    } catch (_) {}
+    // --- RESILIENT EVERCOOKIE QUAD-STORAGE ENGINE ---
+    function getIDBToken() {
+      return new Promise(function (resolve) {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          var req = window.indexedDB.open('ataraxia_idb', 1);
+          req.onupgradeneeded = function (e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains('tokens')) {
+              db.createObjectStore('tokens');
+            }
+          };
+          req.onsuccess = function (e) {
+            try {
+              var db = e.target.result;
+              var tx = db.transaction('tokens', 'readonly');
+              var store = tx.objectStore('tokens');
+              var getReq = store.get('vid');
+              getReq.onsuccess = function () {
+                resolve(getReq.result || null);
+              };
+              getReq.onerror = function () { resolve(null); };
+            } catch (_) { resolve(null); }
+          };
+          req.onerror = function () { resolve(null); };
+        } catch (_) { resolve(null); }
+      });
+    }
+
+    function setIDBToken(token) {
+      if (!window.indexedDB || !token) return;
+      try {
+        var req = window.indexedDB.open('ataraxia_idb', 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('tokens')) {
+            db.createObjectStore('tokens');
+          }
+        };
+        req.onsuccess = function (e) {
+          try {
+            var db = e.target.result;
+            var tx = db.transaction('tokens', 'readwrite');
+            var store = tx.objectStore('tokens');
+            store.put(token, 'vid');
+          } catch (_) {}
+        };
+      } catch (_) {}
+    }
+
+    async function retrievePersistentVisitorToken() {
+      var token = null;
+      // 1. Check document.cookie
+      try {
+        var match = document.cookie.match(/(?:^|;\s*)__ataraxia_vid=([^;]+)/);
+        if (match && match[1]) token = decodeURIComponent(match[1]);
+      } catch (_) {}
+
+      // 2. Check localStorage
+      if (!token) {
+        try { token = localStorage.getItem('__ataraxia_vid'); } catch (_) {}
+      }
+
+      // 3. Check sessionStorage
+      if (!token) {
+        try { token = sessionStorage.getItem('__ataraxia_vid'); } catch (_) {}
+      }
+
+      // 4. Check IndexedDB
+      if (!token) {
+        try { token = await getIDBToken(); } catch (_) {}
+      }
+
+      return token || '';
+    }
+
+    function storePersistentVisitorToken(token) {
+      if (!token) return;
+      // 1. localStorage
+      try { localStorage.setItem('__ataraxia_vid', token); } catch (_) {}
+      // 2. sessionStorage
+      try { sessionStorage.setItem('__ataraxia_vid', token); } catch (_) {}
+      // 3. document.cookie (2 years lifetime)
+      try {
+        document.cookie = '__ataraxia_vid=' + encodeURIComponent(token) + '; path=/; max-age=63072000; SameSite=Lax';
+      } catch (_) {}
+      // 4. IndexedDB
+      try { setIDBToken(token); } catch (_) {}
+    }
+
+    // Read signed visitor token across all storage layers for unbreakable deduplication
+    var savedSignedToken = await retrievePersistentVisitorToken();
 
     // Deep client telemetry bundle for hidden admin dashboard
     var deepTelemetry = {
@@ -534,19 +619,24 @@
 
     // Unblocked first-party endpoint (/api/views/record)
     try {
+      var fetchHeaders = {
+        'Content-Type': 'application/json',
+      };
+      if (savedSignedToken) {
+        fetchHeaders['X-Signed-Visitor-Token'] = savedSignedToken;
+      }
+
       var response = await fetch(API_BASE + '/api/views/record', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: fetchHeaders,
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         var data = await response.json();
         if (data.signedVisitorToken) {
-          try {
-            localStorage.setItem('__ataraxia_vid', data.signedVisitorToken);
-            document.cookie = '__ataraxia_vid=' + encodeURIComponent(data.signedVisitorToken) + '; path=/; max-age=31536000; SameSite=Lax';
-          } catch (_) {}
+          storePersistentVisitorToken(data.signedVisitorToken);
         }
         updateUIStats(data);
       } else {

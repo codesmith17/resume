@@ -67,30 +67,22 @@ async function handleRecord(req, res) {
     const rawBody = req.body || {};
     const cookies = parseCookies(req);
 
-    // 1. Extract and verify Signed Visitor Cookie
+    // 1. Extract and verify Signed Visitor Cookie / Token
     const clientToken = req.headers['x-signed-visitor-token'] || rawBody.signedVisitorToken || cookies['__ataraxia_vid'];
     const verifiedVisitorId = verifySignedVisitorToken(clientToken);
 
-    // 2. Determine persistent visitor ID
-    let persistentVisitorId = verifiedVisitorId;
-    if (!persistentVisitorId) {
-      // First time visitor: generate fresh persistent ID
-      persistentVisitorId = rawBody.fpVisitorId || rawBody.visitorId || ('v_' + crypto.randomUUID().replace(/-/g, '').slice(0, 20));
-    }
-
-    // 3. Issue cryptographically signed token
-    const signedToken = createSignedVisitorToken(persistentVisitorId);
-
-    // Set HTTP cookie (1 year lifetime, Lax, Root path)
-    res.setHeader('Set-Cookie', `__ataraxia_vid=${signedToken}; Path=/; Max-Age=31536000; SameSite=Lax`);
-
     const payload = {
       ...rawBody,
-      visitorId: persistentVisitorId,
-      signedVisitorToken: signedToken,
+      visitorId: verifiedVisitorId || null,
     };
 
     const result = await recordView(req, payload);
+
+    // 2. Issue cryptographically signed token for the resolved canonical visitor ID
+    const signedToken = createSignedVisitorToken(result.visitorId);
+
+    // Set HTTP cookie (2 years lifetime, SameSite=None, Secure for cross-origin)
+    res.setHeader('Set-Cookie', `__ataraxia_vid=${signedToken}; Path=/; Max-Age=63072000; SameSite=None; Secure`);
 
     // Fetch updated live stats for the caller's specific site host (excluding localhost/dev)
     const host = payload.siteHost || '';
@@ -99,7 +91,7 @@ async function handleRecord(req, res) {
     res.json({
       success: true,
       eventId: result.eventId,
-      visitorId: persistentVisitorId,
+      visitorId: result.visitorId,
       signedVisitorToken: signedToken,
       sessionId: result.sessionId,
       device: result.device,

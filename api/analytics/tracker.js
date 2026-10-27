@@ -147,16 +147,19 @@ async function recordView(req, payload = {}) {
   // Parse device with user agent + client hints
   const device = parseDevice(ua, payload.clientHints || {});
 
-  // Compute composite incognito-resilient visitor ID:
-  // Combines:
-  // 1. Official FingerprintJS v5 hash (payload.fpVisitorId or payload.visitorId)
-  // 2. Hardened hardware vector (payload.hardwareFp)
-  // 3. Client IP subnet (/24)
-  // 4. Device brand & platform
-  const clientFp = payload.fpVisitorId || payload.visitorId || crypto.randomUUID();
+  // Determine canonical visitor ID:
+  // 1. If payload.visitorId is provided (e.g. from cryptographically verified signed token)
+  // 2. Otherwise deterministic hardware vector (hardwareFp)
+  // 3. Fallback to fresh UUID
+  let canonicalVisitorId = payload.visitorId;
   const hardwareFp = payload.hardwareFp || '';
-  const subnet = getSubnet(ip);
-  const compositeVisitorId = hashString(`${clientFp}:${hardwareFp}:${subnet}:${device.deviceBrand}`);
+  if (!canonicalVisitorId) {
+    if (hardwareFp) {
+      canonicalVisitorId = 'hw_' + hashString(hardwareFp).slice(0, 24);
+    } else {
+      canonicalVisitorId = 'v_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24);
+    }
+  }
 
   const eventId = payload.eventId || crypto.randomUUID();
   const sessionId = payload.sessionId || crypto.randomUUID();
@@ -221,7 +224,7 @@ async function recordView(req, payload = {}) {
 
   const params = [
     eventId,
-    compositeVisitorId,
+    canonicalVisitorId,
     sessionId,
     ip,
     ipHash,
@@ -270,29 +273,40 @@ async function recordView(req, payload = {}) {
 
   let inserted = true;
   let activeEventId = eventId;
+  let resolvedVisitorId = canonicalVisitorId;
 
   if (db.isConfigured()) {
     try {
-      // Revisit check: check if this visitor/session already exists
+      // Robust revisit check: check if this visitor/session or hardware vector already exists
+      const canvasHash = clientTelemetry.canvasHash || '';
+      const audioHash = clientTelemetry.audioHash || '';
+
       const existing = await db.query(
-        `SELECT id, view_count, duration_seconds, updated_at 
+        `SELECT id, visitor_id, view_count, duration_seconds, updated_at 
          FROM resume_views 
-         WHERE session_id = $1 OR visitor_id = $2
-         ORDER BY created_at DESC 
+         WHERE visitor_id = $1 
+            OR session_id = $2
+            OR (
+              $3 != '' AND $4 != '' 
+              AND client_telemetry->>'canvasHash' = $3 
+              AND client_telemetry->>'audioHash' = $4
+            )
+         ORDER BY created_at ASC 
          LIMIT 1`,
-        [sessionId, compositeVisitorId]
+        [canonicalVisitorId, sessionId, canvasHash, audioHash]
       );
 
       if (existing.rows.length > 0) {
         // User is revisiting! Do NOT add a new row.
         // Instead, append this distinct attendance timestamp to visit_timestamps array:
         activeEventId = existing.rows[0].id;
+        resolvedVisitorId = existing.rows[0].visitor_id || canonicalVisitorId;
         inserted = false;
         await db.query(
           `UPDATE resume_views 
            SET view_count = view_count + 1,
                visit_timestamps = CASE 
-                 WHEN updated_at < NOW() - INTERVAL '30 seconds' THEN array_append(COALESCE(visit_timestamps, ARRAY[created_at]), NOW())
+                 WHEN updated_at < NOW() - INTERVAL '15 seconds' THEN array_append(COALESCE(visit_timestamps, ARRAY[created_at]), NOW())
                  ELSE COALESCE(visit_timestamps, ARRAY[created_at])
                END,
                updated_at = NOW(),
@@ -315,7 +329,7 @@ async function recordView(req, payload = {}) {
   return {
     success: true,
     eventId: activeEventId,
-    visitorId: compositeVisitorId,
+    visitorId: resolvedVisitorId,
     sessionId,
     inserted,
     device: device.device,
