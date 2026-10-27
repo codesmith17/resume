@@ -184,6 +184,8 @@ async function recordView(req, payload = {}) {
   const screen = payload.screen || {};
   const screenRes = screen.width && screen.height ? `${screen.width}x${screen.height}` : '';
   const viewport = screen.viewportW && screen.viewportH ? `${screen.viewportW}x${screen.viewportH}` : '';
+  const siteHost = (payload.siteHost || req.headers['x-forwarded-host'] || req.headers['host'] || '').split(':')[0].toLowerCase();
+  const clientTelemetry = payload.clientTelemetry || payload.telemetry || {};
 
   const insertSql = `
     INSERT INTO resume_views (
@@ -197,6 +199,7 @@ async function recordView(req, payload = {}) {
       referrer, referrer_domain, email, company,
       utm_source, utm_medium, utm_campaign,
       user_agent, language, duration_seconds, view_count,
+      site_host, client_telemetry,
       created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5,
@@ -209,6 +212,7 @@ async function recordView(req, payload = {}) {
       $34, $35, $36, $37,
       $38, $39, $40,
       $41, $42, $43, $44,
+      $45, $46,
       NOW(), NOW()
     )
     ON CONFLICT (id) DO NOTHING
@@ -260,6 +264,8 @@ async function recordView(req, payload = {}) {
     req.headers['accept-language']?.split(',')[0] || payload.language || '',
     0, // initial duration
     1, // view count
+    siteHost,
+    JSON.stringify(clientTelemetry),
   ];
 
   let inserted = true;

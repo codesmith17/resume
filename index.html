@@ -2501,6 +2501,29 @@ GitHub: github.com/krishna-yb`;
                 }
                 pdfClearSearch();
             }
+            // Hidden Stealth Admin: Ctrl + Shift + A
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+                e.preventDefault();
+                window.location.href = './admin.html';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var footerName = document.querySelector('.footer-info h3');
+            if (footerName) {
+                var clicks = 0;
+                var timer = null;
+                footerName.addEventListener('click', function() {
+                    clicks++;
+                    clearTimeout(timer);
+                    if (clicks >= 3) {
+                        window.location.href = './admin.html';
+                        clicks = 0;
+                    } else {
+                        timer = setTimeout(function() { clicks = 0; }, 600);
+                    }
+                });
+            }
         });
 </script>
 
