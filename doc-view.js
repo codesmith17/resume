@@ -638,6 +638,8 @@
         if (data.signedVisitorToken) {
           storePersistentVisitorToken(data.signedVisitorToken);
         }
+        window.__ataraxiaEventId = data.eventId || eventId;
+        window.__ataraxiaVisitorId = data.visitorId || '';
         updateUIStats(data);
       } else {
         fetchStatsOnly(siteHost);
@@ -694,6 +696,33 @@
       }
     }
   }
+
+  // Global action tracking dispatcher for user interactions (view cover letter, download, etc.)
+  window.trackVisitorAction = function (actionName, details) {
+    var eventId = window.__ataraxiaEventId || '';
+    var visitorId = window.__ataraxiaVisitorId || '';
+    var payload = JSON.stringify({
+      eventId: eventId,
+      visitorId: visitorId,
+      action: actionName,
+      details: details || {},
+      timestamp: new Date().toISOString(),
+    });
+
+    try {
+      if (navigator.sendBeacon) {
+        var blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(API_BASE + '/api/views/action', blob);
+      } else {
+        fetch(API_BASE + '/api/views/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: payload,
+        }).catch(function () {});
+      }
+    } catch (_) {}
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {

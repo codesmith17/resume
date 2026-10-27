@@ -814,6 +814,38 @@
                     <div class="kpi-value" id="kpiActiveNow">--</div>
                     <div class="kpi-desc">Heartbeats in last 5m</div>
                 </div>
+                <div class="kpi-card accent-cyan">
+                    <div class="kpi-title">
+                        <span>Resume Page Views</span>
+                        <span>📄</span>
+                    </div>
+                    <div class="kpi-value" id="kpiResumeViews">--</div>
+                    <div class="kpi-desc">Read resume document</div>
+                </div>
+                <div class="kpi-card accent-purple">
+                    <div class="kpi-title">
+                        <span>Cover Letter Views</span>
+                        <span>✉️</span>
+                    </div>
+                    <div class="kpi-value" id="kpiLetterViews">--</div>
+                    <div class="kpi-desc">Opened cover letter view</div>
+                </div>
+                <div class="kpi-card accent-emerald">
+                    <div class="kpi-title">
+                        <span>Resume Downloads</span>
+                        <span>📥</span>
+                    </div>
+                    <div class="kpi-value" id="kpiResumeDownloads">--</div>
+                    <div class="kpi-desc">Downloaded PDF resume</div>
+                </div>
+                <div class="kpi-card accent-amber">
+                    <div class="kpi-title">
+                        <span>Letter Downloads</span>
+                        <span>📥</span>
+                    </div>
+                    <div class="kpi-value" id="kpiLetterDownloads">--</div>
+                    <div class="kpi-desc">Downloaded PDF cover letter</div>
+                </div>
             </section>
 
             <!-- Analytics Visuals Breakdown -->
@@ -858,6 +890,7 @@
                             <tr>
                                 <th>Time & Attendance</th>
                                 <th>Host / Env</th>
+                                <th>Interactions & Downloads</th>
                                 <th>Location & ISP</th>
                                 <th>Device & OS</th>
                                 <th>Browser</th>
@@ -869,7 +902,7 @@
                         </thead>
                         <tbody id="visitorsTableBody">
                             <tr>
-                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px;">
                                     Loading telemetry stream…
                                 </td>
                             </tr>
@@ -1160,6 +1193,19 @@
             const avgStr = avgSec < 60 ? `${avgSec}s` : `${Math.floor(avgSec / 60)}m ${avgSec % 60}s`;
             document.getElementById('kpiAvgDwell').textContent = avgStr;
             document.getElementById('kpiActiveNow').textContent = (ov.active_visitors || 0).toLocaleString();
+
+            if (document.getElementById('kpiResumeViews')) {
+                document.getElementById('kpiResumeViews').textContent = (ov.total_resume_views || ov.total_views || 0).toLocaleString();
+            }
+            if (document.getElementById('kpiLetterViews')) {
+                document.getElementById('kpiLetterViews').textContent = (ov.total_letter_views || 0).toLocaleString();
+            }
+            if (document.getElementById('kpiResumeDownloads')) {
+                document.getElementById('kpiResumeDownloads').textContent = (ov.total_resume_downloads || 0).toLocaleString();
+            }
+            if (document.getElementById('kpiLetterDownloads')) {
+                document.getElementById('kpiLetterDownloads').textContent = (ov.total_letter_downloads || 0).toLocaleString();
+            }
         }
 
         function renderAnalyticsPanels(data) {
@@ -1241,6 +1287,19 @@
                 const isDev = host.includes('localhost') || host.includes('127.0.0.1') || v.ip === '::1' || v.country === 'Local Network';
                 const hostTag = isDev ? `<span class="tag tag-dev">dev: ${escapeHtml(host)}</span>` : `<span class="tag tag-host">${escapeHtml(host)}</span>`;
 
+                // Interactions & Downloads
+                const resViews = v.viewed_resume !== undefined ? v.viewed_resume : (v.view_count || 1);
+                const letViews = v.viewed_cover_letter || 0;
+                const resDl = v.downloaded_resume || 0;
+                const letDl = v.downloaded_cover_letter || 0;
+
+                const actionBadges = [];
+                if (resViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(56,189,248,0.18);color:var(--accent-cyan);" title="Viewed Resume ${resViews} time(s)">📄 Resume (${resViews})</span>`);
+                if (letViews > 0) actionBadges.push(`<span class="tag" style="background:rgba(168,85,247,0.18);color:var(--accent-purple);" title="Viewed Cover Letter ${letViews} time(s)">✉️ Letter (${letViews})</span>`);
+                if (resDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(16,185,129,0.2);color:var(--accent-emerald);font-weight:700;" title="Downloaded Resume ${resDl} time(s)">📥 Resume DL (${resDl})</span>`);
+                if (letDl > 0) actionBadges.push(`<span class="tag" style="background:rgba(245,158,11,0.2);color:var(--accent-amber);font-weight:700;" title="Downloaded Cover Letter ${letDl} time(s)">📥 Letter DL (${letDl})</span>`);
+                if (!actionBadges.length) actionBadges.push(`<span class="tag" style="color:var(--text-muted);">📄 Viewed</span>`);
+
                 const loc = `${escapeHtml(v.city || 'Unknown')}, ${escapeHtml(v.country_code || v.country || 'LOC')}`;
                 const isp = v.org ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(v.org)}</div>` : '';
 
@@ -1272,6 +1331,7 @@
                             ${visitsPill}
                         </td>
                         <td>${hostTag}</td>
+                        <td><div style="display:flex; gap:4px; flex-wrap:wrap;">${actionBadges.join(' ')}</div></td>
                         <td>
                             <div>📍 ${loc}</div>
                             ${isp}

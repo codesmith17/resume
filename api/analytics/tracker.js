@@ -191,7 +191,7 @@ async function recordView(req, payload = {}) {
   const clientTelemetry = payload.clientTelemetry || payload.telemetry || {};
 
   const insertSql = `
-    INSERT INTO resume_views (
+    INSERT INTO visitor (
       id, visitor_id, session_id, ip, ip_hash,
       city, region, country, country_code, latitude, longitude,
       timezone, postal, org, asn,
@@ -203,6 +203,7 @@ async function recordView(req, payload = {}) {
       utm_source, utm_medium, utm_campaign,
       user_agent, language, duration_seconds, view_count,
       site_host, client_telemetry, visit_timestamps,
+      viewed_resume, viewed_cover_letter, downloaded_resume, downloaded_cover_letter, actions,
       created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5,
@@ -216,6 +217,7 @@ async function recordView(req, payload = {}) {
       $38, $39, $40,
       $41, $42, $43, $44,
       $45, $46, ARRAY[NOW()],
+      1, 0, 0, 0, $47::jsonb,
       NOW(), NOW()
     )
     ON CONFLICT (id) DO NOTHING
@@ -269,6 +271,7 @@ async function recordView(req, payload = {}) {
     1, // view count
     siteHost,
     JSON.stringify(clientTelemetry),
+    JSON.stringify([{ action: 'view_resume', timestamp: new Date().toISOString() }]),
   ];
 
   let inserted = true;
@@ -283,7 +286,7 @@ async function recordView(req, payload = {}) {
 
       const existing = await db.query(
         `SELECT id, visitor_id, view_count, duration_seconds, updated_at 
-         FROM resume_views 
+         FROM visitor 
          WHERE visitor_id = $1 
             OR session_id = $2
             OR (
@@ -303,8 +306,9 @@ async function recordView(req, payload = {}) {
         resolvedVisitorId = existing.rows[0].visitor_id || canonicalVisitorId;
         inserted = false;
         await db.query(
-          `UPDATE resume_views 
+          `UPDATE visitor 
            SET view_count = view_count + 1,
+               viewed_resume = COALESCE(viewed_resume, 0) + 1,
                visit_timestamps = CASE 
                  WHEN updated_at < NOW() - INTERVAL '15 seconds' THEN array_append(COALESCE(visit_timestamps, ARRAY[created_at]), NOW())
                  ELSE COALESCE(visit_timestamps, ARRAY[created_at])
@@ -338,12 +342,50 @@ async function recordView(req, payload = {}) {
 }
 
 /**
+ * Record user interactions (view cover letter, download resume, download cover letter, etc.)
+ */
+async function recordAction(eventId, visitorId, actionName, details = {}) {
+  if (!db.isConfigured() || !actionName) return;
+
+  const actionEntry = {
+    action: actionName,
+    details,
+    timestamp: new Date().toISOString(),
+  };
+
+  let colUpdate = '';
+  if (actionName === 'view_resume') {
+    colUpdate = 'viewed_resume = COALESCE(viewed_resume, 0) + 1,';
+  } else if (actionName === 'view_cover_letter') {
+    colUpdate = 'viewed_cover_letter = COALESCE(viewed_cover_letter, 0) + 1,';
+  } else if (actionName === 'download_resume') {
+    colUpdate = 'downloaded_resume = COALESCE(downloaded_resume, 0) + 1,';
+  } else if (actionName === 'download_cover_letter') {
+    colUpdate = 'downloaded_cover_letter = COALESCE(downloaded_cover_letter, 0) + 1,';
+  }
+
+  const sql = `
+    UPDATE visitor
+    SET ${colUpdate}
+        actions = COALESCE(actions, '[]'::jsonb) || $3::jsonb,
+        updated_at = NOW()
+    WHERE id = $1 OR visitor_id = $2;
+  `;
+
+  try {
+    await db.query(sql, [eventId || '', visitorId || '', JSON.stringify([actionEntry])]);
+  } catch (err) {
+    console.error('[tracker] Error recording action:', err.message);
+  }
+}
+
+/**
  * Update viewing duration / heartbeat for an existing view event.
  */
 async function updateHeartbeat(eventId, durationSeconds = 5) {
   if (!db.isConfigured() || !eventId) return;
   const sql = `
-    UPDATE resume_views
+    UPDATE visitor
     SET duration_seconds = GREATEST(duration_seconds, $2::int),
         updated_at = NOW()
     WHERE id = $1;
@@ -357,6 +399,7 @@ async function updateHeartbeat(eventId, durationSeconds = 5) {
 
 module.exports = {
   recordView,
+  recordAction,
   updateHeartbeat,
   resolveLocation,
   getClientIP,

@@ -50,7 +50,7 @@ async function getStats(options = {}) {
         COUNT(DISTINCT visitor_id)::int AS unique_visitors,
         COUNT(DISTINCT CASE WHEN created_at >= CURRENT_DATE THEN visitor_id END)::int AS views_today,
         COUNT(DISTINCT CASE WHEN created_at >= CURRENT_DATE THEN visitor_id END)::int AS unique_today
-      FROM resume_views
+      FROM visitor
       ${where};
     `, params);
 
@@ -109,8 +109,12 @@ async function getAdminStats(options = {}) {
         COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END)::int AS views_today,
         COUNT(DISTINCT CASE WHEN created_at >= CURRENT_DATE THEN visitor_id END)::int AS unique_today,
         COALESCE(AVG(duration_seconds)::int, 0) AS avg_duration_seconds,
-        COUNT(CASE WHEN updated_at >= NOW() - INTERVAL '5 minutes' THEN 1 END)::int AS active_visitors
-      FROM resume_views
+        COUNT(CASE WHEN updated_at >= NOW() - INTERVAL '5 minutes' THEN 1 END)::int AS active_visitors,
+        COALESCE(SUM(viewed_resume), 0)::int AS total_resume_views,
+        COALESCE(SUM(viewed_cover_letter), 0)::int AS total_letter_views,
+        COALESCE(SUM(downloaded_resume), 0)::int AS total_resume_downloads,
+        COALESCE(SUM(downloaded_cover_letter), 0)::int AS total_letter_downloads
+      FROM visitor
       WHERE is_bot = FALSE
         AND ip NOT IN ('127.0.0.1', '::1')
         AND (country != 'Local Network' OR country IS NULL)
@@ -123,7 +127,7 @@ async function getAdminStats(options = {}) {
       SELECT
         COUNT(*)::int AS dev_views,
         COUNT(DISTINCT visitor_id)::int AS dev_visitors
-      FROM resume_views
+      FROM visitor
       WHERE ip IN ('127.0.0.1', '::1')
          OR country = 'Local Network'
          OR site_host LIKE '%localhost%'
@@ -136,7 +140,7 @@ async function getAdminStats(options = {}) {
         COALESCE(NULLIF(site_host, ''), 'unspecified') AS host,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       GROUP BY site_host
       ORDER BY views DESC;
     `);
@@ -149,7 +153,7 @@ async function getAdminStats(options = {}) {
         device_type AS type,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       WHERE is_bot = FALSE ${hostFilter}
       GROUP BY device, device_brand, device_type
       ORDER BY views DESC
@@ -162,7 +166,7 @@ async function getAdminStats(options = {}) {
         COALESCE(NULLIF(os, ''), 'Unknown') AS os,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       WHERE is_bot = FALSE ${hostFilter}
       GROUP BY os
       ORDER BY views DESC
@@ -175,7 +179,7 @@ async function getAdminStats(options = {}) {
         COALESCE(NULLIF(browser, ''), 'Unknown') AS browser,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       WHERE is_bot = FALSE ${hostFilter}
       GROUP BY browser
       ORDER BY views DESC
@@ -190,7 +194,7 @@ async function getAdminStats(options = {}) {
         city,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       WHERE is_bot = FALSE AND country != '' AND country != 'Unknown' ${hostFilter}
       GROUP BY country, country_code, city
       ORDER BY views DESC
@@ -203,7 +207,7 @@ async function getAdminStats(options = {}) {
         COALESCE(NULLIF(referrer_domain, ''), 'Direct') AS domain,
         COUNT(*)::int AS views,
         COUNT(DISTINCT visitor_id)::int AS unique_visitors
-      FROM resume_views
+      FROM visitor
       WHERE is_bot = FALSE ${hostFilter}
       GROUP BY referrer_domain
       ORDER BY views DESC
@@ -257,9 +261,14 @@ async function getAdminStats(options = {}) {
         view_count,
         client_telemetry,
         visit_timestamps,
+        viewed_resume,
+        viewed_cover_letter,
+        downloaded_resume,
+        downloaded_cover_letter,
+        actions,
         created_at,
         updated_at
-      FROM resume_views
+      FROM visitor
       ORDER BY created_at DESC
       LIMIT 60;
     `);
@@ -307,11 +316,13 @@ async function getStorageStats() {
         pg_indexes_size(quote_ident(table_name)) as index_bytes
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
+        AND table_name = 'visitor'
       ORDER BY total_bytes DESC;
     `);
 
     const rowCountRes = await db.query(`
-      SELECT COUNT(*)::int as count FROM resume_views;
+      SELECT COUNT(*)::int as count FROM visitor;
     `);
 
     const CLUSTER_QUOTA_BYTES = 10 * 1024 * 1024 * 1024; // 10.00 GB Managed Cloud Quota

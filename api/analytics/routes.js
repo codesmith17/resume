@@ -8,7 +8,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
-const { recordView, updateHeartbeat } = require('./tracker');
+const { recordView, updateHeartbeat, recordAction } = require('./tracker');
 const { getStats, getAdminStats, getStorageStats } = require('./stats');
 
 // =============================================================================
@@ -109,6 +109,22 @@ async function handleRecord(req, res) {
 
 router.post('/record', handleRecord);
 router.post('/track', handleRecord); // legacy alias
+
+// Handle user actions: view resume, view cover letter, download, etc. (/action)
+async function handleAction(req, res) {
+  try {
+    const { eventId, visitorId, action, details } = req.body || {};
+    if (action) {
+      await recordAction(eventId, visitorId, action, details);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to record action' });
+  }
+}
+
+router.post('/action', handleAction);
+router.post('/event', handleAction); // alias
 
 // Handle heartbeat / dwell time (/ping is unblocked by uBlock Origin)
 async function handlePing(req, res) {

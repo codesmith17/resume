@@ -1959,6 +1959,7 @@
         }
         // Download PDF function
         async function downloadPDF() {
+            if (window.trackVisitorAction) window.trackVisitorAction('download_resume');
             try {
                 // Create a temporary link to trigger download
                 const link = document.createElement('a');
@@ -2167,6 +2168,7 @@ GitHub: github.com/krishna-yb`;
 
         // Download cover letter with today's date embedded in PDF
         async function downloadCoverLetter() {
+            if (window.trackVisitorAction) window.trackVisitorAction('download_cover_letter');
             const fileName = 'KRISHNA_TRIPATHI_COVER_LETTER.pdf';
             try {
                 if (typeof showToast === 'function') {
@@ -2243,6 +2245,7 @@ GitHub: github.com/krishna-yb`;
         }
         const resumeContent = [document.getElementById('loading'), document.getElementById('pdfContainer'), document.getElementById('pdfFallback'), document.getElementById('errorMessage')];
         function showResume() {
+            if (window.trackVisitorAction) window.trackVisitorAction('view_resume');
             currentView = 'resume';
             resumeContent.forEach((element) => element.classList.remove('content-hidden'));
             letterPanel.classList.add('content-hidden');
@@ -2255,6 +2258,7 @@ GitHub: github.com/krishna-yb`;
             letterToggle.setAttribute('aria-selected', 'false');
         }
         function showLetter() {
+            if (window.trackVisitorAction) window.trackVisitorAction('view_cover_letter');
             currentView = 'cover-letter';
             resumeContent.forEach((element) => element.classList.add('content-hidden'));
             letterPanel.classList.remove('content-hidden');
