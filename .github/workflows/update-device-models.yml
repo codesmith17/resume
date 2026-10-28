@@ -1,0 +1,37 @@
+name: Weekly Update Google Certified Devices
+
+on:
+  schedule:
+    # Runs every Sunday at 03:00 UTC (weekly)
+    - cron: '0 3 * * 0'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update-devices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync Google Play Supported Devices
+        run: node scripts/sync-devices.js
+
+      - name: Commit and Push If Changed
+        run: |
+          git config user.name "codesmith17"
+          git config user.email "kanchanlatakrishna@gmail.com"
+          git add data/device_models.json
+          if git diff --staged --quiet; then
+            echo "No new device models found in Google's database. Already up to date."
+          else
+            git commit -m "chore(devices): weekly update of Google Play certified device models" --author="codesmith17 <kanchanlatakrishna@gmail.com>"
+            git push origin main
+          fi

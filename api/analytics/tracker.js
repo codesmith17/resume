@@ -167,8 +167,13 @@ async function recordView(req, payload = {}) {
   const ua = req.headers['user-agent'] || '';
   const isBotUser = isBot(ua);
 
-  // Parse device with user agent + client hints
-  const device = parseDevice(ua, payload.clientHints || {});
+  // Parse device with user agent + client hints + screen + hardware telemetry
+  const device = parseDevice(
+    ua,
+    payload.clientHints || {},
+    payload.screen || {},
+    payload.clientTelemetry || payload.telemetry || {}
+  );
 
   // Determine canonical visitor ID:
   // 1. If payload.visitorId is provided (e.g. from cryptographically verified signed token)
