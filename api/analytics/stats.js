@@ -5,6 +5,7 @@
  * - Admin Stats: Full unredacted telemetry, client hardware/environment dumps, per-host breakdowns
  */
 const db = require('./db');
+const { parseDevice } = require('./device');
 
 /**
  * Public stats for the footer view counter badge.
@@ -276,6 +277,30 @@ async function getAdminStats(options = {}) {
       LIMIT 60;
     `);
 
+    // Dynamically enrich device & OS with high-precision Google Certified catalog & hardware vectors
+    const enrichedVisits = (recentRes.rows || []).map(v => {
+      try {
+        const t = v.client_telemetry || {};
+        const hints = t.clientHints || {};
+        const screen = {
+          width: parseInt((v.screen_res || '').split('x')[0], 10) || 0,
+          height: parseInt((v.screen_res || '').split('x')[1], 10) || 0,
+          pixelRatio: v.pixel_ratio || 1,
+        };
+        const resolved = parseDevice(v.user_agent, hints, screen, t);
+        return {
+          ...v,
+          device: resolved.device && resolved.device !== 'Unknown Device' ? resolved.device : v.device,
+          device_brand: resolved.deviceBrand || v.device_brand,
+          device_model: resolved.deviceModel || v.device_model,
+          device_type: resolved.deviceType || v.device_type,
+          os: resolved.os && resolved.os !== 'Unknown' ? resolved.os : v.os,
+        };
+      } catch (_) {
+        return v;
+      }
+    });
+
     return {
       configured: true,
       overview: prodOverviewRes.rows[0] || {},
@@ -286,7 +311,7 @@ async function getAdminStats(options = {}) {
       browsers: browserRes.rows,
       geo: geoRes.rows,
       referrers: refRes.rows,
-      recentVisits: recentRes.rows,
+      recentVisits: enrichedVisits,
       timestamp: new Date().toISOString(),
     };
   } catch (err) {

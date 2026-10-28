@@ -21,6 +21,7 @@ function cleanGpu(renderer) {
   let clean = renderer
     .replace(/^ANGLE\s*\([^,]+,\s*/i, '')
     .replace(/,\s*OpenGL.*|\s*Direct3D.*|\s*D3D.*|\(TM\)|\(R\)/gi, '')
+    .replace(/\s*\(0x[0-9a-fA-F]+\)/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
   clean = clean.replace(/[,;)]+$/, '').trim();
