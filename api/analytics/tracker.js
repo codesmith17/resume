@@ -311,23 +311,24 @@ async function recordView(req, payload = {}) {
 
   if (db.isConfigured()) {
     try {
-      // Robust revisit check: check if this visitor/session or hardware vector already exists
-      const canvasHash = clientTelemetry.canvasHash || '';
-      const audioHash = clientTelemetry.audioHash || '';
-
+      // Revisit check:
+      // 1. Verified signed visitor cookie/token (primary anchor, survives Wi-Fi changes)
+      // 2. Active browser session_id
+      // 3. Fallback (if user cleared cookies): only match if on the SAME IP and matching hardware hashes
       const existing = await db.query(
         `SELECT id, visitor_id, view_count, duration_seconds, updated_at 
          FROM visitor 
          WHERE visitor_id = $1 
             OR session_id = $2
             OR (
-              $3 != '' AND $4 != '' 
+              $3 != '' AND $4 != '' AND $5 != ''
+              AND ip = $5
               AND client_telemetry->>'canvasHash' = $3 
               AND client_telemetry->>'audioHash' = $4
             )
          ORDER BY created_at ASC 
          LIMIT 1`,
-        [canonicalVisitorId, sessionId, canvasHash, audioHash]
+        [canonicalVisitorId, sessionId, canvasHash, audioHash, ip]
       );
 
       if (existing.rows.length > 0) {
