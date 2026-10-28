@@ -547,6 +547,112 @@
             color: #070a13;
         }
 
+        /* ── Cursor Pagination Controls ── */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            border-bottom-left-radius: var(--radius-md);
+            border-bottom-right-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .page-size-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .page-size-picker select {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .page-size-picker select:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination-page-indicator {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .pagination-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .pagination-info {
+                justify-content: space-between;
+            }
+            .pagination-buttons {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .pagination-btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
         /* ── Storage Page Diagnostics Styles ────────────────────────── */
         .storage-meter-card {
             background: var(--bg-card);
@@ -952,13 +1058,13 @@
             </div>
         </div>
         <div class="nav-right">
-            <select class="filter-select" id="hostFilter" onchange="loadCurrentTab()">
+            <select class="filter-select" id="hostFilter" onchange="loadCurrentTab({ resetPage: true })">
                 <option value="all">Filter: All Hosts</option>
                 <option value="codesmith17.github.io">codesmith17.github.io (Prod)</option>
                 <option value="vercel">Vercel Deployments</option>
                 <option value="localhost">localhost (Dev)</option>
             </select>
-            <button class="btn-action" onclick="loadCurrentTab()" title="Refresh telemetry">
+            <button class="btn-action" onclick="loadCurrentTab({ resetPage: true })" title="Refresh telemetry">
                 <span>↻</span>
                 <span id="refreshLabel">Refresh</span>
             </button>
@@ -1134,6 +1240,32 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Cursor Pagination Bar -->
+                <div class="pagination-bar" id="paginationBar">
+                    <div class="pagination-info">
+                        <span id="pageInfoText">Loading records…</span>
+                        <div class="page-size-picker">
+                            <span>Per page:</span>
+                            <select id="pageSizeSelect" onchange="changePageSize(this.value)">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pagination-buttons">
+                        <button class="pagination-btn" id="prevPageBtn" onclick="goToPrevPage()" disabled title="Go to previous page">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            Previous
+                        </button>
+                        <span class="pagination-page-indicator" id="pageNumberIndicator">Page 1</span>
+                        <button class="pagination-btn" id="nextPageBtn" onclick="goToNextPage()" disabled title="Go to next page via cursor">
+                            Next
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
             </section>
         </div>
 
@@ -1298,9 +1430,9 @@
             }
         }
 
-        function loadCurrentTab() {
+        function loadCurrentTab(opts = {}) {
             if (currentTab === 'telemetry') {
-                loadDashboardData();
+                loadDashboardData(opts);
             } else {
                 loadStorageData();
             }
@@ -1369,11 +1501,24 @@
             document.getElementById('loginOverlay').style.display = 'none';
         }
 
-        // --- Tab 1: Telemetry Data ---
-        async function loadDashboardData() {
+        // --- Tab 1: Telemetry Data with Cursor Pagination ---
+        let currentCursor = null;
+        let cursorHistory = []; // Stack of past cursors for Back navigation
+        let currentPageNum = 1;
+        let currentPageSize = 25;
+        let paginationInfo = null;
+
+        async function loadDashboardData(opts = {}) {
             if (!currentAdminToken) {
                 showLogin();
                 return;
+            }
+
+            const { resetPage = false } = opts;
+            if (resetPage) {
+                currentCursor = null;
+                cursorHistory = [];
+                currentPageNum = 1;
             }
 
             const host = document.getElementById('hostFilter').value;
@@ -1381,9 +1526,13 @@
             refreshLabel.textContent = 'Loading…';
 
             try {
-                let url = `${API_BASE}/api/views/admin-data`;
+                let url = `${API_BASE}/api/views/admin-data?limit=${currentPageSize}`;
                 if (host && host !== 'all') {
-                    url += `?host=${encodeURIComponent(host)}`;
+                    url += `&host=${encodeURIComponent(host)}`;
+                }
+                const activeCursor = resetPage ? null : (opts.cursor !== undefined ? opts.cursor : currentCursor);
+                if (activeCursor) {
+                    url += `&cursor=${encodeURIComponent(activeCursor)}`;
                 }
 
                 const res = await fetch(url, {
@@ -1401,11 +1550,64 @@
                 renderKPIs(data);
                 renderAnalyticsPanels(data);
                 renderVisitorsFeed(data.recentVisits || []);
+                renderPagination(data.pagination || {});
             } catch (err) {
                 console.error('Error loading dashboard:', err);
             } finally {
                 refreshLabel.textContent = 'Refresh';
             }
+        }
+
+        function renderPagination(p) {
+            paginationInfo = p;
+            const total = p.totalRecords || 0;
+            const returned = p.returnedCount || 0;
+            const start = total === 0 ? 0 : (currentPageNum - 1) * currentPageSize + 1;
+            const end = total === 0 ? 0 : Math.min(start + returned - 1, total);
+
+            const infoEl = document.getElementById('pageInfoText');
+            if (infoEl) {
+                infoEl.textContent = total > 0
+                    ? `Showing ${start.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()} records`
+                    : 'No records found';
+            }
+
+            const indicatorEl = document.getElementById('pageNumberIndicator');
+            if (indicatorEl) {
+                indicatorEl.textContent = `Page ${currentPageNum}`;
+            }
+
+            const prevBtn = document.getElementById('prevPageBtn');
+            if (prevBtn) {
+                prevBtn.disabled = cursorHistory.length === 0;
+            }
+
+            const nextBtn = document.getElementById('nextPageBtn');
+            if (nextBtn) {
+                nextBtn.disabled = !p.hasMore || !p.nextCursor;
+            }
+        }
+
+        function goToNextPage() {
+            if (!paginationInfo || !paginationInfo.hasMore || !paginationInfo.nextCursor) return;
+            cursorHistory.push(currentCursor);
+            currentCursor = paginationInfo.nextCursor;
+            currentPageNum++;
+            loadDashboardData({ cursor: currentCursor });
+            document.querySelector('.feed-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function goToPrevPage() {
+            if (cursorHistory.length === 0) return;
+            currentCursor = cursorHistory.pop();
+            currentPageNum = Math.max(1, currentPageNum - 1);
+            loadDashboardData({ cursor: currentCursor });
+            document.querySelector('.feed-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function changePageSize(val) {
+            currentPageSize = parseInt(val, 10) || 25;
+            loadDashboardData({ resetPage: true });
         }
 
         function renderKPIs(data) {
@@ -1489,7 +1691,11 @@
 
         function renderVisitorsFeed(visits) {
             cachedVisitors = visits;
-            document.getElementById('feedCountTag').textContent = `${visits.length} records`;
+            const countTag = document.getElementById('feedCountTag');
+            if (countTag) {
+                const total = paginationInfo?.totalRecords || visits.length;
+                countTag.textContent = `${total.toLocaleString()} records`;
+            }
             const tbody = document.getElementById('visitorsTableBody');
 
             if (!visits.length) {

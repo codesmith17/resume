@@ -285,7 +285,7 @@ router.get('/admin-verify', (req, res) => {
   return res.status(401).json({ valid: false, error: 'Session expired or invalid.' });
 });
 
-// Admin In-Depth Telemetry Data endpoint
+// Admin In-Depth Telemetry Data endpoint (Supports cursor pagination)
 router.get('/admin-data', async (req, res) => {
   const token = extractToken(req);
   if (!verifyToken(token)) {
@@ -294,7 +294,9 @@ router.get('/admin-data', async (req, res) => {
 
   try {
     const host = req.query.host || '';
-    const data = await getAdminStats({ host });
+    const cursor = req.query.cursor || null;
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const data = await getAdminStats({ host, cursor, limit });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to load telemetry', details: err.message });

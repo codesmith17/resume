@@ -88,7 +88,8 @@ async function getStats(options = {}) {
  * Includes complete visitor telemetry, client hardware profiles, deep fingerprints, and host metrics.
  */
 async function getAdminStats(options = {}) {
-  const { host = '' } = options;
+  const { host = '', cursor = null, limit: rawLimit = 25 } = options;
+  const limit = Math.min(Math.max(parseInt(rawLimit, 10) || 25, 5), 100);
 
   if (!db.isConfigured()) {
     return { configured: false, error: 'Database not configured' };
@@ -215,7 +216,27 @@ async function getAdminStats(options = {}) {
       LIMIT 10;
     `, params);
 
-    // 9. Full Recent Visits with complete client_telemetry
+    // 9. Full Recent Visits with Cursor Pagination & Telemetry
+    const recentParams = [...params];
+    let cursorClause = '';
+
+    if (cursor && typeof cursor === 'string') {
+      try {
+        const decoded = Buffer.from(cursor, 'base64').toString('utf8');
+        const [cursorDate, cursorId] = decoded.split('|');
+        if (cursorDate && cursorId) {
+          recentParams.push(cursorDate);
+          const pDate = recentParams.length;
+          recentParams.push(cursorId);
+          const pId = recentParams.length;
+          cursorClause = ` AND (created_at < $${pDate} OR (created_at = $${pDate} AND id < $${pId}))`;
+        }
+      } catch (_) {}
+    }
+
+    recentParams.push(limit + 1);
+    const pLimit = recentParams.length;
+
     const recentRes = await db.query(`
       SELECT
         id,
@@ -273,12 +294,31 @@ async function getAdminStats(options = {}) {
         created_at,
         updated_at
       FROM visitor
-      ORDER BY created_at DESC
-      LIMIT 60;
-    `);
+      WHERE 1=1 ${hostFilter} ${cursorClause}
+      ORDER BY created_at DESC, id DESC
+      LIMIT $${pLimit};
+    `, recentParams);
+
+    // Total records count matching current host filter
+    const countRes = await db.query(`
+      SELECT COUNT(*)::int AS total
+      FROM visitor
+      WHERE 1=1 ${hostFilter};
+    `, params);
+    const totalRecords = countRes.rows[0]?.total || 0;
+
+    let hasMore = recentRes.rows.length > limit;
+    const pageRows = hasMore ? recentRes.rows.slice(0, limit) : recentRes.rows;
+
+    let nextCursor = null;
+    if (hasMore && pageRows.length > 0) {
+      const lastItem = pageRows[pageRows.length - 1];
+      const isoDate = lastItem.created_at instanceof Date ? lastItem.created_at.toISOString() : new Date(lastItem.created_at).toISOString();
+      nextCursor = Buffer.from(`${isoDate}|${lastItem.id}`).toString('base64');
+    }
 
     // Dynamically enrich device & OS with high-precision Google Certified catalog & hardware vectors
-    const enrichedVisits = (recentRes.rows || []).map(v => {
+    const enrichedVisits = pageRows.map(v => {
       try {
         const t = v.client_telemetry || {};
         const hints = t.clientHints || {};
@@ -312,6 +352,13 @@ async function getAdminStats(options = {}) {
       geo: geoRes.rows,
       referrers: refRes.rows,
       recentVisits: enrichedVisits,
+      pagination: {
+        limit,
+        hasMore,
+        nextCursor,
+        totalRecords,
+        returnedCount: enrichedVisits.length,
+      },
       timestamp: new Date().toISOString(),
     };
   } catch (err) {
