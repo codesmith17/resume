@@ -7,10 +7,14 @@
 (function () {
   'use strict';
 
-  // Base API URL: when running statically on github.io, route to deployed Vercel backend
+  // Base API URL: route to deployed Vercel backend unless on local dev server
   var API_BASE = (function () {
     var host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
-    if (host.indexOf('github.io') !== -1) {
+    var proto = (typeof window !== 'undefined' && window.location && window.location.protocol) || '';
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return '';
+    }
+    if (proto === 'file:' || !host || host.indexOf('github.io') !== -1) {
       return 'https://resume-mu-ivory-48.vercel.app';
     }
     return '';

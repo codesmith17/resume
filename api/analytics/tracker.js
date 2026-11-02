@@ -311,6 +311,9 @@ async function recordView(req, payload = {}) {
 
   if (db.isConfigured()) {
     try {
+      const canvasHash = clientTelemetry.canvasHash || '';
+      const audioHash = clientTelemetry.audioHash || '';
+
       // Revisit check:
       // 1. Verified signed visitor cookie/token (primary anchor, survives Wi-Fi changes)
       // 2. Active browser session_id

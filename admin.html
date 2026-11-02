@@ -1385,8 +1385,12 @@
     <!-- ── SCRIPTS ────────────────────────────────────────────────── -->
     <script>
         const API_BASE = (() => {
-            const host = window.location.hostname || '';
-            if (host.indexOf('github.io') !== -1) {
+            const host = (window.location && window.location.hostname) || '';
+            const proto = (window.location && window.location.protocol) || '';
+            if (host === 'localhost' || host === '127.0.0.1') {
+                return '';
+            }
+            if (proto === 'file:' || !host || host.indexOf('github.io') !== -1) {
                 return 'https://resume-mu-ivory-48.vercel.app';
             }
             return '';
